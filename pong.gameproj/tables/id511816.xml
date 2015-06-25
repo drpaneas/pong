@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<table version="1.000000" name="PurchaseTable" numRows="1" numCols="5" flags="26" tableType="3">
+    <rows>
+        <row id="0" name=""/>
+    </rows>
+    <columns>
+        <column id="0" name="Id" type="1" readonly="0"></column>
+        <column id="1" name="Consumable" type="4" readonly="0">0</column>
+        <column id="2" name="Name" type="1" readonly="0"></column>
+        <column id="3" name="Price" type="1" readonly="0"></column>
+        <column id="4" name="State" type="1" readonly="0"></column>
+    </columns>
+</table>
