@@ -14,17 +14,167 @@ import (
 	"log"
 	"math"
 	"math/rand"
-	"time"
 )
+
+// Structures
+// --------------------------------------------------------------------------------------------------------------- //
+
+// Vector2D is a struct that stores X and Y values for a position
+type Vector2D struct {
+	X float64
+	Y float64
+}
+
+// Game is the main struct for our game that holds all the important information
+type Game struct {
+	// The player's and enemy's score in the game
+	playerScore, enemyScore int
+
+	// The font used to display the score on the screen
+	font font.Face
+
+	// The current state of the game (playing, paused, etc)
+	state GameState
+
+	// The number of times the ball has been hit back and forth
+	// the more times it is hit, the faster it goes to increase the difficulty
+	volleyCount int
+
+	// The ball in the game
+	ball *Ball
+
+	// The player's paddle
+	player *Player
+
+	// The enemy's paddle
+	enemy *Enemy
+}
+
+// Ball is a struct that holds information about the ball in the game
+type Ball struct {
+	// The position of the ball on the screen
+	position *rect.Rectangle
+
+	// The velocity (movement) of the ball
+	velocity *Vector2D
+
+	// The speed of the ball
+	speed float64
+}
+
+// Paddle is a struct that holds information about a paddle in the game
+type Paddle struct {
+	// The position of the paddle on the screen
+	position *rect.Rectangle
+
+	// The velocity (movement) of the paddle
+	velocity *Vector2D
+
+	// The speed of the paddle
+	speed float64
+}
+
+// Player is a struct that holds information about the player's paddle and score
+type Player struct {
+	// The player's paddle
+	paddle *Paddle
+
+	// The player's score
+	score int
+}
+
+// Enemy is a struct that holds information about the enemy's paddle and score
+type Enemy struct {
+	// The enemy's paddle
+	paddle *Paddle
+
+	// The enemy's score
+	score int
+}
+
+// Constructors and methods
+// --------------------------------------------------------------------------------------------------------------- //
+// newGame creates a new game instance
+func newGame() *Game {
+	// Load the font
+	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	face, _ := opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    32,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+
+	// Create the game
+	return &Game{
+		font:   face,
+		state:  firstService,
+		ball:   newBall(),
+		player: newPlayer(),
+		enemy:  newEnemy(),
+	}
+}
+
+func newPlayer() *Player {
+	return &Player{
+		paddle: &Paddle{
+			position: rect.Rect(screenWidth-70-20, halfGameScreenHeight-110/2, 20, 110),
+			velocity: &Vector2D{X: 0, Y: 0},
+			speed:    15.0,
+		},
+		score: 0,
+	}
+}
+
+func newEnemy() *Enemy {
+	return &Enemy{
+		paddle: &Paddle{
+			position: rect.Rect(70, halfGameScreenHeight-110/2, 20, 110),
+			velocity: &Vector2D{X: 0, Y: 0},
+			speed:    15.0,
+		},
+		score: 0,
+	}
+}
+
+func newBall() *Ball {
+	b := &Ball{
+		position: rect.Rect(halfGameScreenWidth-20/2, halfGameScreenHeight-20/2, 20, 20),
+		speed:    15.0,
+		velocity: &Vector2D{X: 0, Y: 0},
+	}
+
+	return b
+}
+
+// Implement the Interface for ball and paddle
+// --------------------------------------------------------------------------------------------------------------- //
+// Ball.Update() and Ball.Draw(), Paddle.Update() and Paddle.Draw()
+
+func (b *Ball) Draw(screen *ebiten.Image) {
+	// draw ball
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(b.position.X), float64(b.position.Y))
+	vector.DrawFilledRect(screen, float32(b.position.X), float32(b.position.Y), float32(b.position.Width), float32(b.position.Height), color.White)
+}
+
+func (paddle *Paddle) Draw(screen *ebiten.Image) {
+	// draw player
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(paddle.position.X), float64(paddle.position.X))
+	vector.DrawFilledRect(screen, float32(paddle.position.X), float32(paddle.position.Y), float32(paddle.position.Width), float32(paddle.position.Height), color.White)
+}
+
+// --------------------------------------------------------------------------------------------------------------- //
 
 // Game constants (global)
 const (
-	gameScreenWidth      = 1280
-	gameScreenHeight     = 720
-	ballSpeed            = 15.0
-	paddleSpeed          = 15.0
-	halfGameScreenWidth  = gameScreenWidth / 2
-	halfGameScreenHeight = gameScreenHeight / 2
+	screenWidth          = 1280
+	screenHeight         = 720
+	halfGameScreenWidth  = screenWidth / 2
+	halfGameScreenHeight = screenHeight / 2
 )
 
 // GameState is the current state of the game (playing, paused, game over)
@@ -39,392 +189,170 @@ const (
 
 // Game variables (global)
 var (
-	// Game objects, are all rectangles (yes even the ball, because this game is older than circles)
-	ball, player, enemy = createGameObjects()
-
-	// Velocities and speeds
-	ballXVelocity, ballYVelocity              int
-	playerPaddleVelocity, enemyPaddleVelocity = 0, paddleSpeed
-
 	// Scoring and font
 	playerScoreCount, enemyScoreCount   int
 	scoreDisplayFont, resultDisplayFont font.Face
-	volleyCount                         int
-
-	// Game state
-	currentGameState GameState = playing
 )
-
-// Game struct - required by Ebiten to run the game!
-type Game struct{}
 
 // Functions
 // --------------------------------------------------------------------------------------------------------------- //
-
-// createGameObjects creates the main game objects (ball, player, enemy)
-// This function is called only once, at the start of the game or when the game is reset.
-func createGameObjects() (*rect.Rectangle, *rect.Rectangle, *rect.Rectangle) {
-	// Place the ball (square 20x20) in the center of the screen
-	ball := rect.Rect(gameScreenWidth/2-10, gameScreenHeight/2-10, 20, 20)
-
-	// Place the player and enemy paddles (rectangle 20x110) 70 pixels away from the left and right sides of the screen, respectively.
-	enemy := rect.Rect(70, halfGameScreenHeight-110/2, 20, 110)
-	player := rect.Rect(gameScreenWidth-70-20, halfGameScreenHeight-110/2, 20, 110)
-
-	return ball, player, enemy
-}
-
 // startNewRound begins a new round of the game (should be called after a player or enemy scores).
 // It places the ball back in the center of the screen and serves it to a random direction with a lower speed.
-func startNewRound() {
-	currentGameState = firstService
-	volleyCount = 0 // reset the volley count
-	ball.Center(halfGameScreenWidth, halfGameScreenHeight)
+func (g *Game) startNewRound() {
+	g.volleyCount = 0 // reset the volley count
+	g.ball.position.Center(halfGameScreenWidth, halfGameScreenHeight)
 
 	// Serve the ball to a random side, with lower speed,
-	reduceBallSpeed()
+	g.ball.velocity.X = g.ball.speed * randomChoice(-1, 1) / 3
+	g.ball.velocity.Y = g.ball.speed * randomChoice(-1, 1) / 3
 }
 
-// updateBallPosition updates the position of the ball based on its current velocity.
-func updateBallPosition() {
-	ball.X += ballXVelocity
-	ball.Y += ballYVelocity
-}
-
-// reduceBallSpeed reduces the ball speed by a factor of 3.
-// This is used when the ball is served to a player for the first time.
-func reduceBallSpeed() {
-	ballXVelocity = ballSpeed * randomChoice(-1, 1) / 3
-	ballYVelocity = ballSpeed * randomChoice(-1, 1) / 3
-}
-
-// increaseBallSpeed increases the ball speed to its maximum value
-func increaseBallSpeed() {
-	signX := 1
-	if ballXVelocity < 0 {
-		signX = -1
-	}
-	signY := 1
-	if ballYVelocity < 0 {
-		signY = -1
-	}
-	ballXVelocity = signX * ballSpeed
-	ballYVelocity = signY * ballSpeed
-}
-
-// ballMovement updates the position of the ball in the game and handles various events that can occur in relation to the ball.
-// The function checks if the ball goes out of the screen, scores, hits player's or enemy's paddle, hits the corners of the screen,
-// or changes speed, and performs appropriate actions such as reversing direction, resetting the ball, bouncing back, playing sound,
-// increasing the volley count, normalizing speed, etc. The purpose of this function is to update the state of the ball in the game.
-func ballMovement() {
-	updateBallPosition() // update ball position
+// move updates the position of the ball based on its current velocity.
+func (b *Ball) move() {
+	b.position.X += int(math.Round(b.velocity.X))
+	b.position.Y += int(math.Round(b.velocity.Y))
 
 	// Check if ball goes out of screen
-	if ball.Top() < 0 || ball.Bottom() > gameScreenHeight {
+	if b.position.Top() < 0 || b.position.Bottom() > screenHeight {
 		// if ball is below screen, set bottom to screen height
-		if ball.Bottom() >= gameScreenHeight {
-			ball.Bottom(gameScreenHeight)
+		if b.position.Bottom() >= screenHeight {
+			b.position.Bottom(screenHeight)
 		} else {
 			// if ball is above screen, set top to 0
-			ball.Top(0)
+			b.position.Top(0)
 		}
-		ballYVelocity *= -1 // reverse Y axis velocity
-	}
-
-	// Check if player scores
-	if ball.Left() <= 0 {
-		playerScoreCount++
-		if playerScoreCount == 10 {
-			currentGameState = gameOver
-		} else {
-			startNewRound()
-		}
-	}
-
-	// Check if enemy scores
-	if ball.Right() >= gameScreenWidth {
-		enemyScoreCount++
-		if enemyScoreCount == 10 {
-			currentGameState = gameOver
-		} else {
-			startNewRound()
-		}
-	}
-
-	// Check if ball hits player paddle
-	if ball.Overlaps(player) {
-		volleyCount++
-		ball.Right(player.Left()) // move ball so it touches paddle
-		bouncePlayer()
-		currentGameState = playing
-	}
-
-	// Check if ball hits enemy paddle
-	if ball.Overlaps(enemy) {
-		volleyCount++
-		ball.Left(enemy.Right()) // move ball so it touches paddle
-		bounceEnemy()
-		currentGameState = playing
-	}
-
-	// Avoid ball getting stuck in screen corners
-	noCornerStuck()
-
-	// Normalize ball speed if game is playing
-	if currentGameState == playing {
-		normalizeBallSpeed()
+		b.velocity.Y *= -1 // reverse Y axis velocity
 	}
 }
 
-// noCornerStuck checks if the ball is in any of the four corners and, if so,
-// moves the ball to the edge of the screen and reverses the speed. If the ball
-// is not in any of the corners, the function returns early without doing any changes.
-func noCornerStuck() {
-	var x, y int
-	var newX, newY int
-
-	// Get the ball's current position
-	if x, y = ball.TopLeft(); x <= 0 && y <= 0 {
-		newX, newY = 0, 0
-	} else if x, y = ball.TopRight(); x >= gameScreenWidth && y <= 0 {
-		newX, newY = gameScreenWidth, 0
-	} else if x, y = ball.BottomLeft(); x <= 0 && y >= gameScreenHeight {
-		newX, newY = 0, gameScreenHeight
-	} else if x, y = ball.BottomRight(); x >= gameScreenWidth && y >= gameScreenHeight {
-		newX, newY = gameScreenWidth, gameScreenHeight
-	} else {
-		return // No corner collision detected, return early
-	}
-
-	// Move the ball back so it touches the screen but doesn't overlap
-	ball.TopLeft(newX, newY)
-
-	// Reverse the X and Y axis speed
-	ballXVelocity *= -1
-	ballYVelocity *= -1
+// setInitialVelocity reduces the ball speed by a factor of 3.
+// This is used when the ball is served to a player for the first time.
+func (b *Ball) setInitialVelocity() {
+	b.velocity.X = b.speed * randomChoice(-1, 1) / 3
+	b.velocity.Y = b.speed * randomChoice(-1, 1) / 3
 }
 
-func normalizeBallSpeed() {
+// accelerate increases the ball speed to its maximum value
+func (b *Ball) accelerate() {
+	signX := 1.0
+	if b.velocity.X < 0 {
+		signX = -1
+	}
+	signY := 1.0
+	if b.velocity.Y < 0 {
+		signY = -1
+	}
+	b.velocity.X = signX * b.speed
+	b.velocity.Y = signY * b.speed
+}
+
+func (b *Ball) normalizeBallSpeed() {
 	// Calculate the total speed of the ball in pixels per frame
-	speed := math.Sqrt(math.Pow(float64(ballXVelocity), 2) + math.Pow(float64(ballYVelocity), 2))
+	speed := math.Sqrt(math.Pow(b.velocity.X, 2) + math.Pow(b.velocity.Y, 2))
 
 	// Normalize the ball speed if it's larger than desired
-	if speed > ballSpeed {
+	if speed > b.speed {
 		// Adjust the X and Y components of velocity
-		factor := ballSpeed / speed
-		ballXVelocity = int(float64(ballXVelocity) * factor)
-		ballYVelocity = int(float64(ballYVelocity) * factor)
+		factor := b.speed / speed
+		b.velocity.X = b.velocity.X * factor
+		b.velocity.Y = b.velocity.Y * factor
 	}
 }
 
-func bounceEnemy() {
-	increaseBallSpeed()
-
-	ballXVelocity *= -1
-
-	part := enemy.Height / 8
-	if volleyCount < 4 { // 0 1 2 3
-		if ball.Top() < enemy.Top()+part {
-			ballYVelocity = atAngle(-45)
-		} else if ball.Top() < enemy.Top()+part*2 {
-			ballYVelocity = atAngle(-30)
-		} else if ball.Top() < enemy.Top()+part*3 {
-			ballYVelocity = atAngle(-15)
-		} else if ball.Top() < enemy.Top()+part*4 {
-			ballYVelocity = atAngle(0)
-		} else if ball.Top() < enemy.Top()+part*5 {
-			ballYVelocity = atAngle(0)
-		} else if ball.Top() < enemy.Top()+part*6 {
-			ballYVelocity = atAngle(15)
-		} else if ball.Top() < enemy.Top()+part*7 {
-			ballYVelocity = atAngle(30)
-		} else if ball.Top() < enemy.Top()+part*8 {
-			ballYVelocity = atAngle(45)
-		}
+func (enemy *Enemy) bounce(ball *Ball, volleyCount int) {
+	ball.velocity.X *= -1 // reverse the ball direction on X axis
+	part := float64(enemy.paddle.position.Height / 8.0)
+	var sl []float64
+	if volleyCount < 4 {
+		sl = []float64{-45, -30, -15, 0, 0, 15, 30, 45}
+	} else if volleyCount >= 4 && volleyCount < 8 {
+		sl = []float64{-60, -45, -30, -15, 0, 0, 15, 30}
+	} else if volleyCount >= 8 {
+		sl = []float64{-75, -60, -45, -30, -15, 0, 15, 30}
+	} else {
+		sl = []float64{-90, -45, -30, -15, 0, 15, 30, 45}
 	}
 
-	if volleyCount >= 4 && volleyCount < 8 { // 4 5 6 7
-		if ball.Top() < enemy.Top()+part {
-			ballYVelocity = atAngle(-60)
-		} else if ball.Top() < enemy.Top()+part*2 {
-			ballYVelocity = atAngle(-45)
-		} else if ball.Top() < enemy.Top()+part*3 {
-			ballYVelocity = atAngle(-30)
-		} else if ball.Top() < enemy.Top()+part*4 {
-			ballYVelocity = atAngle(-15)
-		} else if ball.Top() < enemy.Top()+part*5 {
-			ballYVelocity = atAngle(0)
-		} else if ball.Top() < enemy.Top()+part*6 {
-			ballYVelocity = atAngle(0)
-		} else if ball.Top() < enemy.Top()+part*7 {
-			ballYVelocity = atAngle(15)
-		} else if ball.Top() < enemy.Top()+part*8 {
-			ballYVelocity = atAngle(30)
-		}
-	}
-
-	if volleyCount >= 8 {
-		if ball.Top() < enemy.Top()+part {
-			ballYVelocity = atAngle(-75)
-		} else if ball.Top() < enemy.Top()+part*2 {
-			ballYVelocity = atAngle(-60)
-		} else if ball.Top() < enemy.Top()+part*3 {
-			ballYVelocity = atAngle(-45)
-		} else if ball.Top() < enemy.Top()+part*4 {
-			ballYVelocity = atAngle(-30)
-		} else if ball.Top() < enemy.Top()+part*5 {
-			ballYVelocity = atAngle(-15)
-		} else if ball.Top() < enemy.Top()+part*6 {
-			ballYVelocity = atAngle(0)
-		} else if ball.Top() < enemy.Top()+part*7 {
-			ballYVelocity = atAngle(15)
-		} else if ball.Top() < enemy.Top()+part*8 {
-			ballYVelocity = atAngle(30)
+	for i := 0; i < 8; i++ {
+		if ball.position.Top() < enemy.paddle.position.Top()+int(math.Round(part*(float64(i)+1))) {
+			ball.velocity.Y = ball.atAngle(sl[i])
+			break
 		}
 	}
 }
 
-func bouncePlayer() {
-	increaseBallSpeed()
+func (player *Player) bounce(ball *Ball, volleyCount int) {
 
 	// Chop the player in 8 parts and assign a different angle to each part
-	ballXVelocity *= -1 // Reverse the ball direction on X axis
-	part := player.Height / 8
+	ball.velocity.X *= -1 // Reverse the ball direction on X axis
+	part := player.paddle.position.Height / 8
 
+	var sl []float64
 	if volleyCount < 4 {
-		if ball.Y < player.Y+part {
-			ballYVelocity = atAngle(-135)
-		} else if ball.Y < player.Y+part*2 {
-			ballYVelocity = atAngle(-150)
-		} else if ball.Y < player.Y+part*3 {
-			ballYVelocity = atAngle(-165)
-		} else if ball.Y < player.Y+part*4 {
-			ballYVelocity = atAngle(180)
-		} else if ball.Y < player.Y+part*5 {
-			ballYVelocity = atAngle(180)
-		} else if ball.Y < player.Y+part*6 {
-			ballYVelocity = atAngle(165)
-		} else if ball.Y < player.Y+part*7 {
-			ballYVelocity = atAngle(150)
-		} else if ball.Y < player.Y+part*8 {
-			ballYVelocity = atAngle(135)
-		}
+		sl = []float64{-135, -150, -165, -180, -180, 165, 150, 135}
+	} else if volleyCount >= 4 && volleyCount < 8 {
+		sl = []float64{-150, -165, -180, -180, 165, 150, 135, 120}
+	} else if volleyCount >= 8 {
+		sl = []float64{-165, -180, -180, 165, 150, 135, 120, 105}
+	} else {
+		sl = []float64{-180, -180, 165, 150, 135, 120, 105, 90}
 	}
 
-	if volleyCount >= 4 && volleyCount < 8 {
-		if ball.Y < player.Y+part {
-			ballYVelocity = atAngle(-135)
-		} else if ball.Y < player.Y+part*2 {
-			ballYVelocity = atAngle(-150)
-		} else if ball.Y < player.Y+part*3 {
-			ballYVelocity = atAngle(-165)
-		} else if ball.Y < player.Y+part*4 {
-			ballYVelocity = atAngle(180)
-		} else if ball.Y < player.Y+part*5 {
-			ballYVelocity = atAngle(180)
-		} else if ball.Y < player.Y+part*6 {
-			ballYVelocity = atAngle(165)
-		} else if ball.Y < player.Y+part*7 {
-			ballYVelocity = atAngle(150)
-		} else if ball.Y < player.Y+part*8 {
-			ballYVelocity = atAngle(135)
-		}
-	}
-
-	if volleyCount >= 8 {
-		if ball.Y < player.Y+part {
-			ballYVelocity = atAngle(-135)
-		} else if ball.Y < player.Y+part*2 {
-			ballYVelocity = atAngle(-150)
-		} else if ball.Y < player.Y+part*3 {
-			ballYVelocity = atAngle(-165)
-		} else if ball.Y < player.Y+part*4 {
-			ballYVelocity = atAngle(180)
-		} else if ball.Y < player.Y+part*5 {
-			ballYVelocity = atAngle(180)
-		} else if ball.Y < player.Y+part*6 {
-			ballYVelocity = atAngle(165)
-		} else if ball.Y < player.Y+part*7 {
-			ballYVelocity = atAngle(150)
-		} else if ball.Y < player.Y+part*8 {
-			ballYVelocity = atAngle(135)
+	for i := 0; i < 8; i++ {
+		if ball.position.Top() < player.paddle.position.Top()+part*(i+1) {
+			ball.velocity.Y = ball.atAngle(sl[i])
+			break
 		}
 	}
 
 }
 
-func atAngle(angle float64) int {
+func (b *Ball) atAngle(angle float64) float64 {
 	// Convert the angle to radians
 	radians := angle * math.Pi / 180
 	// Calculate the new speed for Y axis
-	return int(math.Round(math.Tan(radians) * float64(ballXVelocity)))
+	return math.Round(math.Tan(radians) * b.velocity.X)
 }
 
-func playerMovement() {
+func (player *Player) move() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
-		playerPaddleVelocity -= paddleSpeed
+		player.paddle.velocity.Y -= player.paddle.speed
 	} else if inpututil.IsKeyJustReleased(ebiten.KeyArrowUp) {
-		playerPaddleVelocity += paddleSpeed
+		player.paddle.velocity.Y += player.paddle.speed
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
-		playerPaddleVelocity += paddleSpeed
+		player.paddle.velocity.Y += player.paddle.speed
 	} else if inpututil.IsKeyJustReleased(ebiten.KeyArrowDown) {
-		playerPaddleVelocity -= paddleSpeed
+		player.paddle.velocity.Y -= player.paddle.speed
 	}
 
-	player.Y += playerPaddleVelocity
+	player.paddle.position.Y += int(math.Round(player.paddle.velocity.Y))
 
 	// Check if the player is out of the screen
-	if player.Top() < 0 {
-		player.Top(0)
+	if player.paddle.position.Top() < 0 {
+		player.paddle.position.Top(0)
 	}
 
-	if player.Bottom() > gameScreenHeight {
-		player.Bottom(gameScreenHeight)
+	if player.paddle.position.Bottom() > screenHeight {
+		player.paddle.position.Bottom(screenHeight)
 	}
 }
 
-func enemyMovement() {
-	enemyAI()
+func (enemy *Enemy) move() {
 
 	// Check if the enemy is out of the screen
-	if enemy.Top() < 0 {
-		enemy.Top(0)
+	if enemy.paddle.position.Top() < 0 {
+		enemy.paddle.position.Top(0)
 	}
 
-	if enemy.Bottom() > gameScreenHeight {
-		enemy.Bottom(gameScreenHeight)
+	if enemy.paddle.position.Bottom() > screenHeight {
+		enemy.paddle.position.Bottom(screenHeight)
 	}
+
 }
 
-func enemyAI() {
-	//// Enemy follows the ball on Y axis
-	var tmp int
-	if rand.Float64() > 0.1 {
-		tmp = paddleSpeed * -1
-	} else {
-		tmp = paddleSpeed
-	}
-
-	// if half of the enemy height is below the center of ball, move down
-	if enemy.CenterY() < ball.CenterY() {
-		enemy.Y += int(enemyPaddleVelocity) - tmp
-	}
-
-	// if half of the enemy height is above the center of the ball, move up
-	if enemy.CenterY() > ball.CenterY() {
-		enemy.Y -= int(enemyPaddleVelocity) - tmp
-	}
-}
-
-// function that returns a random number between min and max
-func random(min, max int) int {
-	rand.Seed(time.Now().Unix())
-	return rand.Intn(max-min) + min
-}
-
-// Function that returns randomly either a or b. If a and b are equal, it returns a.
-func randomChoice(a, b int) int {
+// Function that returns randomly either a or b. If a and b are equal, it returns value 'a'.
+func randomChoice(a, b float64) float64 {
 	if a == b {
 		return a
 	}
@@ -435,50 +363,131 @@ func randomChoice(a, b int) int {
 }
 
 func (g *Game) Update() error {
-	if currentGameState == paused {
+	if g.state == paused {
 		return nil
 	}
-	if currentGameState == gameOver {
+	if g.state == gameOver {
 		return nil
 	}
-	ballMovement()
-	playerMovement()
-	enemyMovement()
+
+	if g.state == firstService && g.ball.velocity.X == 0 && g.ball.velocity.Y == 0 { // if ball is not moving anymore
+		{
+			g.volleyCount = 0 // reset the volley count
+			g.ball.position.Center(halfGameScreenWidth, halfGameScreenHeight)
+
+			// Serve the ball to a random side, with lower speed,
+			g.ball.velocity.X = g.ball.speed * randomChoice(-1, 1) / 3
+			g.ball.velocity.Y = g.ball.speed * randomChoice(-1, 1) / 3
+
+		}
+	}
+
+	// Update the position of the ball in the game based on its velocity (check for out of screen as well)
+	g.ball.position.X += int(math.Round(g.ball.velocity.X))
+	g.ball.position.Y += int(math.Round(g.ball.velocity.Y))
+
+	// Check if ball goes out of screen
+	if g.ball.position.Top() < 0 || g.ball.position.Bottom() > screenHeight {
+		// if ball is below screen, set bottom to screen height
+		if g.ball.position.Bottom() >= screenHeight {
+			g.ball.position.Bottom(screenHeight)
+		} else {
+			// if ball is above screen, set top to 0
+			g.ball.position.Top(0)
+		}
+		g.ball.velocity.Y *= -1 // reverse Y axis velocity
+	}
+
+	// After moving the ball to the new location, check for various events:
+
+	// Check 1: if player scores
+	if g.ball.position.Left() <= 0 {
+		playerScoreCount++
+		if playerScoreCount == 10 {
+			g.state = gameOver
+		} else {
+			g.startNewRound()
+		}
+	}
+
+	// Check 2: if enemy scores
+	if g.ball.position.Right() >= screenWidth {
+		enemyScoreCount++
+		if enemyScoreCount == 10 {
+			g.state = gameOver
+		} else {
+			g.startNewRound()
+		}
+	}
+
+	// Check 3: if ball hits player paddle
+	if g.ball.position.Overlaps(g.player.paddle.position) {
+		g.volleyCount++
+		g.ball.position.Right(g.player.paddle.position.Left()) // move ball so it touches paddle
+		g.ball.accelerate()                                    // faster ball to make the game more interesting
+		g.player.bounce(g.ball, g.volleyCount)
+		g.state = playing
+		g.ball.normalizeBallSpeed() // normalize ball speed
+	}
+
+	// Check 4: if ball hits enemy paddle
+	if g.ball.position.Overlaps(g.enemy.paddle.position) {
+		g.volleyCount++
+		g.ball.position.Left(g.enemy.paddle.position.Right()) // move ball so it touches paddle
+		g.ball.accelerate()                                   // faster ball to make the game more interesting
+		g.enemy.bounce(g.ball, g.volleyCount)
+		g.state = playing
+		g.ball.normalizeBallSpeed() // normalize ball speed
+	}
+
+	// Move the player paddle based on the input from the user (if any)
+	g.player.move()
+
+	// Move the enemy paddle based on the AI
+	// Step 1: Decide where to move the enemy paddle based on the ball position
+	var tmp float64
+	if rand.Float64() > 0.1 {
+		tmp = g.enemy.paddle.speed * -1
+	} else {
+		tmp = g.enemy.paddle.speed
+	}
+	// if half of the enemy height is below the center of the ball, move down
+	if g.enemy.paddle.position.CenterY() < g.ball.position.CenterY() {
+		g.enemy.paddle.position.Y += int(math.Round(g.enemy.paddle.speed - tmp))
+	}
+
+	// if half of the enemy height is above the center of the ball, move up
+	if g.enemy.paddle.position.CenterY() > g.ball.position.CenterY() {
+		g.enemy.paddle.position.Y -= int(math.Round(g.enemy.paddle.speed - tmp))
+	}
+
+	// Step 2: Move the enemy paddle to the previously decided location
+	g.enemy.move()
+
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// draw ball
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(ball.X), float64(ball.Y))
-	vector.DrawFilledRect(screen, float32(ball.X), float32(ball.Y), float32(ball.Width), float32(ball.Height), color.White)
-
 	// draw dashed line in the middle (dimensions 10x60 per dash and 40px space between dashes)
-	for i := 0; i < gameScreenHeight; i += 100 {
+	for i := 0; i < screenHeight; i += 100 {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(float64(halfGameScreenWidth), float64(i))
 		vector.StrokeLine(screen, float32(halfGameScreenWidth), float32(i), float32(halfGameScreenWidth), float32(i+60), 10, color.White)
 	}
 
-	// draw player
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(player.X), float64(player.X))
-	vector.DrawFilledRect(screen, float32(player.X), float32(player.Y), float32(player.Width), float32(player.Height), color.White)
-
-	// draw enemy
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(enemy.X), float64(enemy.Y))
-	vector.DrawFilledRect(screen, float32(enemy.X), float32(enemy.Y), float32(enemy.Width), float32(enemy.Height), color.White)
+	g.ball.Draw(screen)
+	g.player.paddle.Draw(screen)
+	g.enemy.paddle.Draw(screen)
 
 	// draw score
 	text.Draw(screen, fmt.Sprintf("%d", enemyScoreCount), scoreDisplayFont, halfGameScreenWidth-360, 120, color.White)
 	text.Draw(screen, fmt.Sprintf("%d", playerScoreCount), scoreDisplayFont, halfGameScreenWidth+360-75, 120, color.White)
 
-	if currentGameState == paused {
+	if g.state == paused {
 		text.Draw(screen, "PAUSED", scoreDisplayFont, halfGameScreenWidth-100, halfGameScreenHeight-100, color.White)
 	}
 
-	if currentGameState == gameOver {
+	if g.state == gameOver {
 		if playerScoreCount > enemyScoreCount {
 			text.Draw(screen, "WINNER", resultDisplayFont, halfGameScreenWidth+450, halfGameScreenHeight, color.White)
 			text.Draw(screen, "LOSER", resultDisplayFont, halfGameScreenWidth-450, halfGameScreenHeight, color.White)
@@ -489,8 +498,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return gameScreenWidth, gameScreenHeight
+func (g *Game) Layout(_, _ int) (int, int) {
+	return screenWidth, screenHeight
 }
 
 func init() {
@@ -518,14 +527,13 @@ func init() {
 		log.Fatal(err)
 	}
 
-	startNewRound() // Initialize ball position and speed
 }
 
 func main() {
-	ebiten.SetWindowSize(gameScreenWidth, gameScreenHeight)
+	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Pong")
-
-	if err := ebiten.RunGame(&Game{}); err != nil {
+	game := newGame()
+	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
 }
