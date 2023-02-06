@@ -25,6 +25,12 @@ type Vector2D struct {
 	Y float64
 }
 
+// GameObject is an interface that holds common fields and methods for all game objects
+type GameObject interface {
+	Update()
+	Draw(screen *ebiten.Image)
+}
+
 // Game is the main struct for our game that holds all the important information
 type Game struct {
 	// The player's and enemy's score in the game
@@ -48,6 +54,9 @@ type Game struct {
 
 	// The enemy's paddle
 	enemy *Enemy
+
+	// A slice to store all the game objects
+	gameObjects []GameObject
 }
 
 // Ball is a struct that holds information about the ball in the game
@@ -108,13 +117,18 @@ func newGame() *Game {
 	})
 
 	// Create the game
-	return &Game{
+	game := &Game{
 		font:   face,
 		state:  firstService,
 		ball:   newBall(),
 		player: newPlayer(),
 		enemy:  newEnemy(),
 	}
+
+	// Add the objects to the gameObjects slice
+	game.gameObjects = append(game.gameObjects, game.ball, game.player, game.enemy)
+
+	return game
 }
 
 func newPlayer() *Player {
@@ -165,6 +179,29 @@ func (paddle *Paddle) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(paddle.position.X), float64(paddle.position.X))
 	vector.DrawFilledRect(screen, float32(paddle.position.X), float32(paddle.position.Y), float32(paddle.position.Width), float32(paddle.position.Height), color.White)
+}
+
+func (enemy *Enemy) Draw(screen *ebiten.Image) {
+	enemy.paddle.Draw(screen)
+}
+
+func (player *Player) Draw(screen *ebiten.Image) {
+	player.paddle.Draw(screen)
+}
+
+func (b *Ball) Update() {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (player *Player) Update() {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (enemy *Enemy) Update() {
+	//TODO implement me
+	panic("implement me")
 }
 
 // --------------------------------------------------------------------------------------------------------------- //
@@ -475,9 +512,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		vector.StrokeLine(screen, float32(halfGameScreenWidth), float32(i), float32(halfGameScreenWidth), float32(i+60), 10, color.White)
 	}
 
-	g.ball.Draw(screen)
-	g.player.paddle.Draw(screen)
-	g.enemy.paddle.Draw(screen)
+	// Loop through the gameObjects slice and call the Draw function for each object
+	for _, obj := range g.gameObjects {
+		obj.Draw(screen)
+	}
 
 	// draw score
 	text.Draw(screen, fmt.Sprintf("%d", enemyScoreCount), scoreDisplayFont, halfGameScreenWidth-360, 120, color.White)
