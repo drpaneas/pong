@@ -7,7 +7,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"image/color"
 	"math"
-	"math/rand"
 )
 
 func (g *Game) Update() error {
@@ -21,81 +20,115 @@ func (g *Game) Update() error {
 	if g.state == firstService && g.ball.velocity.X == 0 && g.ball.velocity.Y == 0 { // if ball is not moving anymore
 		{
 			g.volleyCount = 0 // reset the volley count
-			g.ball.position.Center(halfGameScreenWidth, halfGameScreenHeight)
 
 			// Serve the ball to a random side, with lower speed,
 			g.ball.setInitialVelocity()
 
+			// if the velocity is going to the left side (enemy), then set the playerTurn to enemy
+			if g.ball.velocity.X < 0.0 {
+				g.playerTurn = playerTurnEnemy
+			} else {
+				g.playerTurn = playerTurnPlayer
+			}
+
 		}
 	}
 
-	// Move ball based on its velocity
-	g.ball.Update()
+	if g.state == playing || g.state == firstService {
 
-	// Check of events:
-	// 1: Player scores
-	if g.ball.position.Left() <= 0 {
-		g.player.score++
-		if g.player.score == 10 {
-			g.state = gameOver
+		// Move ball based on its velocity
+		g.ball.Update()
+
+		// if the velocity is going to the left side (enemy), then set the playerTurn to enemy
+		if g.ball.velocity.X < 0.0 {
+			g.playerTurn = playerTurnEnemy
 		} else {
-			g.startNewRound()
+			g.playerTurn = playerTurnPlayer
 		}
-	}
 
-	// 2. Enemy scores
-	if g.ball.position.Right() >= screenWidth {
-		g.enemy.score++
-		if g.enemy.score == 10 {
-			g.state = gameOver
-		} else {
-			g.startNewRound()
+		// Check of events:
+		// 1: Player scores
+		if g.ball.position.Left() <= 0 {
+			g.player.score++
+			if g.player.score == 10 {
+				g.state = gameOver
+			} else {
+				g.startNewRound()
+				return nil
+			}
 		}
-	}
 
-	// 3. Ball hits player paddle
-	if g.ball.position.Overlaps(g.player.paddle.position) {
-		g.volleyCount++
-		g.ball.position.Right(g.player.paddle.position.Left()) // move ball so it touches paddle
-		g.ball.accelerate()                                    // faster ball to make the game more interesting
-		g.player.bounce(g.ball, g.volleyCount)
-		g.state = playing
-		g.ball.normalizeBallSpeed() // normalize ball speed
-	}
+		// 2. Enemy scores
+		if g.ball.position.Right() >= screenWidth {
+			g.enemy.score++
+			if g.enemy.score == 10 {
+				g.state = gameOver
+			} else {
+				g.startNewRound()
+				return nil
+			}
+		}
 
-	// 4. Ball hits enemy paddle
-	if g.ball.position.Overlaps(g.enemy.paddle.position) {
-		g.volleyCount++
-		g.ball.position.Left(g.enemy.paddle.position.Right()) // move ball so it touches paddle
-		g.ball.accelerate()                                   // faster ball to make the game more interesting
-		g.enemy.bounce(g.ball, g.volleyCount)
-		g.state = playing
-		g.ball.normalizeBallSpeed() // normalize ball speed
-	}
+		// 3. Ball hits player paddle
+		if g.ball.position.Overlaps(g.player.paddle.position) {
+			g.playerTurn = playerTurnEnemy // enemy has to play next
+			g.volleyCount++
+			g.ball.position.Right(g.player.paddle.position.Left()) // move ball so it touches paddle
+			g.ball.accelerate()                                    // faster ball to make the game more interesting
+			g.player.bounce(g.ball, g.volleyCount)
+			g.state = playing
+			g.ball.normalizeBallSpeed() // normalize ball speed
+		}
 
-	// Move the player paddle based on user input
-	g.player.Update()
+		// 4. Ball hits enemy paddle
+		if g.ball.position.Overlaps(g.enemy.paddle.position) {
+			g.playerTurn = playerTurnPlayer // player has to play next
+			g.volleyCount++
+			g.ball.position.Left(g.enemy.paddle.position.Right()) // move ball so it touches paddle
+			g.ball.accelerate()                                   // faster ball to make the game more interesting
+			g.enemy.bounce(g.ball, g.volleyCount)
+			g.state = playing
+			g.ball.normalizeBallSpeed() // normalize ball speed
+		}
 
-	// Move the enemy paddle based on the AI
-	// 1: Decide where to move the enemy paddle based on the ball position
-	var tmp float64
-	if rand.Float64() > 0.1 {
-		tmp = g.enemy.paddle.speed * -1
-	} else {
-		tmp = g.enemy.paddle.speed
-	}
-	// 1.a. Move enemy down, if it is higher than the ball
-	if g.enemy.paddle.position.Top() < g.ball.position.Bottom() {
-		g.enemy.paddle.position.Y += int(math.Round(g.enemy.paddle.speed - tmp))
-	}
+		// Move the player paddle based on user input
+		g.player.Update()
 
-	// 1.b. Move enemy up, if it is lower than the ball
-	if g.enemy.paddle.position.Bottom() > g.ball.position.Top() {
-		g.enemy.paddle.position.Y -= int(math.Round(g.enemy.paddle.speed - tmp))
-	}
+		// Move the enemy paddle based on the AI
+		// 1: Decide where to move the enemy paddle based on the ball position
+		if g.playerTurn == playerTurnEnemy {
+			// if the ball is at the enemy side of the screen, then move the paddle to the ball
+			if g.ball.position.CenterX() < halfGameScreenWidth {
+				// 1.a. If the ball is higher than the enemy paddle, move the enemy paddle up
+				if g.ball.position.Bottom() < g.enemy.paddle.position.CenterY() {
+					g.enemy.paddle.position.Y -= int(math.Round(g.enemy.paddle.speed))
+				}
 
-	// 2: Move the enemy paddle to the previously decided location
-	g.enemy.Update()
+				// 1.b. If the ball is lower than the enemy paddle, move the enemy paddle down
+				if g.ball.position.Top() > g.enemy.paddle.position.CenterY() {
+					g.enemy.paddle.position.Y += int(math.Round(g.enemy.paddle.speed))
+				}
+			} else {
+				if g.timer%2 == 0 {
+					g.enemy.patrol()
+				}
+			}
+		}
+
+		if g.playerTurn == playerTurnPlayer {
+			if g.timer%2 == 0 {
+				g.enemy.patrol()
+			}
+		}
+
+		g.timer++
+		if g.timer > 60 {
+			g.timer = 0
+		}
+
+		// 2: Move the enemy paddle to the previously decided location
+		g.enemy.Update()
+	}
 
 	return nil
 }

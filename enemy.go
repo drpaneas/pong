@@ -13,6 +13,9 @@ type Enemy struct {
 
 	// The enemy's score
 	score int
+
+	// Random goto position during patrol
+	randomPosition int
 }
 
 func newEnemy() *Enemy {
@@ -61,4 +64,29 @@ func (enemy *Enemy) bounce(ball *Ball, volleyCount int) {
 			break
 		}
 	}
+}
+
+// patrol() is making the enemy paddle go randomly up and down
+// if it is reaching the top or bottom of the screen, it will change direction
+func (enemy *Enemy) patrol() {
+	if enemy.randomPosition == 0 {
+		halfPaddle := enemy.paddle.position.Height / 2
+		enemy.randomPosition = randInt(0+halfPaddle, screenHeight-halfPaddle)
+	}
+
+	// the position is higher than the paddle, move up
+	if enemy.randomPosition < enemy.paddle.position.CenterY() {
+		enemy.paddle.position.Y -= int(math.Round(enemy.paddle.speed))
+	}
+
+	// the position is lower than the paddle, move down
+	if enemy.randomPosition > enemy.paddle.position.CenterY() {
+		enemy.paddle.position.Y += int(math.Round(enemy.paddle.speed))
+	}
+
+	// if the enemy paddle Y is +-15from the random position, calculate a new random position
+	if enemy.randomPosition-15 < enemy.paddle.position.CenterY() && enemy.randomPosition+15 > enemy.paddle.position.CenterY() {
+		enemy.randomPosition = 0
+	}
+
 }

@@ -34,6 +34,8 @@ func newBall() *Ball {
 	return b
 }
 
+var endY int
+
 // Draw draws the ball on the screen
 func (b *Ball) Draw(screen *ebiten.Image) {
 	// draw ball
@@ -64,10 +66,18 @@ func (b *Ball) Update() {
 // setInitialVelocity reduces the ball speed
 // This is used when the ball is served to a player for the first time.
 func (b *Ball) setInitialVelocity() {
-	direction := randomChoice(-1, 1)
-	reducer := 0.25
-	b.velocity.X = b.speed * reducer * direction
-	b.velocity.Y = b.speed * reducer * direction
+	directionX := randFloat(-0.5, 0.5)
+	directionY := randFloat(-0.5, 0.5)
+
+	// Make sure the ball always moves in the X axis
+	if directionX == 0 {
+		directionX = 0.5
+	}
+
+	reducer := 0.7
+	b.velocity.X = b.speed * reducer * directionX
+	b.velocity.Y = b.speed * reducer * directionY
+
 }
 
 func (b *Ball) normalizeBallSpeed() {

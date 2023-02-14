@@ -9,3 +9,10 @@ const (
 	gameOver
 	firstService
 )
+
+type playerTurn int
+
+const (
+	playerTurnPlayer playerTurn = iota
+	playerTurnEnemy
+)

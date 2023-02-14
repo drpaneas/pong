@@ -25,6 +25,9 @@ type Game struct {
 	// The current state of the game (playing, paused, etc)
 	state GameState
 
+	// The current turn of the player (player or enemy)
+	playerTurn playerTurn
+
 	// The number of times the ball has been hit back and forth
 	// the more times it is hit, the faster it goes to increase the difficulty
 	volleyCount int
@@ -40,6 +43,9 @@ type Game struct {
 
 	// A slice to store all the game objects
 	gameObjects []GameObject
+
+	// timer
+	timer int
 }
 
 func newGame() *Game {
@@ -73,6 +79,12 @@ func newGame() *Game {
 // It places the ball back in the center of the screen and serves it to a random direction with a lower speed.
 func (g *Game) startNewRound() {
 	g.volleyCount = 0 // reset the volley count
+
+	// Stop the ball
+	g.ball.velocity.X = 0
+	g.ball.velocity.Y = 0
+
+	// Place the ball in the center of the screen
 	g.ball.position.Center(halfGameScreenWidth, halfGameScreenHeight)
 
 	// Serve the ball to a random side, with lower speed,
