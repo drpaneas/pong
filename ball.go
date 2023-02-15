@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"github.com/drpaneas/rect"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"image/color"
+	"log"
 	"math"
 )
 
@@ -18,6 +20,9 @@ type Ball struct {
 
 	// The speed of the ball
 	speed float64
+
+	// sounds map
+	sounds map[string]*Sound
 }
 
 // NewBall creates a new ball with the default values
@@ -31,10 +36,15 @@ func newBall() *Ball {
 		velocity: &Vector2D{X: 0, Y: 0},
 	}
 
+	var err error
+	b.sounds, err = LoadSounds()
+	if err != nil {
+		errSound := errors.New("error loading sounds")
+		log.Fatal(errors.Join(errSound, err))
+	}
+
 	return b
 }
-
-var endY int
 
 // Draw draws the ball on the screen
 func (b *Ball) Draw(screen *ebiten.Image) {
@@ -52,6 +62,9 @@ func (b *Ball) Update() {
 
 	// Check if ball goes out of screen
 	if b.position.Top() < 0 || b.position.Bottom() > screenHeight {
+		if err := b.playSound("wall"); err != nil {
+			return
+		}
 		// if ball is below screen, set bottom to screen height
 		if b.position.Bottom() >= screenHeight {
 			b.position.Bottom(screenHeight)
@@ -69,9 +82,8 @@ func (b *Ball) setInitialVelocity() {
 	directionX := randFloat(-0.5, 0.5)
 	directionY := randFloat(-0.5, 0.5)
 
-	// Make sure the ball always moves in the X axis
 	if directionX == 0 {
-		directionX = 0.5
+		directionX = 1
 	}
 
 	reducer := 0.7
@@ -112,4 +124,13 @@ func (b *Ball) accelerate() {
 	}
 	b.velocity.X = signX * b.speed
 	b.velocity.Y = signY * b.speed
+}
+
+func (b *Ball) playSound(name string) error {
+	if s, ok := b.sounds[name]; ok {
+		if err := s.Play(); err != nil {
+			return err
+		}
+	}
+	return nil
 }

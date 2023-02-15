@@ -49,6 +49,9 @@ func (g *Game) Update() error {
 		// Check of events:
 		// 1: Player scores
 		if g.ball.position.Left() <= 0 {
+			if err := g.ball.playSound("score"); err != nil {
+				return err
+			}
 			g.player.score++
 			if g.player.score == 10 {
 				g.state = gameOver
@@ -60,6 +63,9 @@ func (g *Game) Update() error {
 
 		// 2. Enemy scores
 		if g.ball.position.Right() >= screenWidth {
+			if err := g.ball.playSound("score"); err != nil {
+				return err
+			}
 			g.enemy.score++
 			if g.enemy.score == 10 {
 				g.state = gameOver
@@ -71,6 +77,9 @@ func (g *Game) Update() error {
 
 		// 3. Ball hits player paddle
 		if g.ball.position.Overlaps(g.player.paddle.position) {
+			if err := g.ball.playSound("bounce"); err != nil {
+				return err
+			}
 			g.playerTurn = playerTurnEnemy // enemy has to play next
 			g.volleyCount++
 			g.ball.position.Right(g.player.paddle.position.Left()) // move ball so it touches paddle
@@ -82,6 +91,9 @@ func (g *Game) Update() error {
 
 		// 4. Ball hits enemy paddle
 		if g.ball.position.Overlaps(g.enemy.paddle.position) {
+			if err := g.ball.playSound("bounce"); err != nil {
+				return err
+			}
 			g.playerTurn = playerTurnPlayer // player has to play next
 			g.volleyCount++
 			g.ball.position.Left(g.enemy.paddle.position.Right()) // move ball so it touches paddle

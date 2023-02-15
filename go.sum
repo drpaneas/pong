@@ -7,8 +7,17 @@ github.com/go-gl/glfw/v3.3/glfw v0.0.0-20221017161538-93cebf72946b/go.mod h1:tQ2
 github.com/hajimehoshi/bitmapfont/v2 v2.2.3 h1:jmq/TMNj352V062Tr5e3hAoipkoxCbY1JWTzor0zNps=
 github.com/hajimehoshi/ebiten/v2 v2.5.0-alpha.12.0.20230202133301-f4371991fe43 h1:amqGigA6jg0sf6/6rxfNt9nVqBLl56PmUsmTT5qOMKY=
 github.com/hajimehoshi/ebiten/v2 v2.5.0-alpha.12.0.20230202133301-f4371991fe43/go.mod h1:VcRcaEedhw8IAps5JOMsdy1cPUtrpiROVFadF2Hj/4k=
+github.com/hajimehoshi/go-mp3 v0.3.4 h1:NUP7pBYH8OguP4diaTZ9wJbUbk3tC0KlfzsEpWmYj68=
+github.com/hajimehoshi/go-mp3 v0.3.4/go.mod h1:fRtZraRFcWb0pu7ok0LqyFhCUrPeMsGRSVop0eemFmo=
+github.com/hajimehoshi/oto/v2 v2.3.1/go.mod h1:seWLbgHH7AyUMYKfKYT9pg7PhUu9/SisyJvNTT+ASQo=
+github.com/hajimehoshi/oto/v2 v2.4.0-alpha.12 h1:Te24epx3UHrk9SkW3nFTHLy3vK+ZNE3rKFeWM23622Q=
+github.com/hajimehoshi/oto/v2 v2.4.0-alpha.12/go.mod h1:wre+KgbOrKDXpgk6W/JC6KoFqZnVC/VtX5ZFRkJuxO4=
 github.com/jezek/xgb v1.1.0 h1:wnpxJzP1+rkbGclEkmwpVFQWpuE2PUGNUzP8SbfFobk=
 github.com/jezek/xgb v1.1.0/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFlk=
+github.com/jfreymuth/oggvorbis v1.0.4 h1:cyJCd0XSoxkKzUPmqM0ZoQJ0h/WbhfyvUR+FTMxQEac=
+github.com/jfreymuth/oggvorbis v1.0.4/go.mod h1:1U4pqWmghcoVsCJJ4fRBKv9peUJMBHixthRlBeD6uII=
+github.com/jfreymuth/vorbis v1.0.2 h1:m1xH6+ZI4thH927pgKD8JOH4eaGRm18rEE9/0WKjvNE=
+github.com/jfreymuth/vorbis v1.0.2/go.mod h1:DoftRo4AznKnShRl1GxiTFCseHr4zR9BN3TWXyuzrqQ=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
@@ -30,6 +39,7 @@ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.4.0 h1:Zr2JFtRQNX3BCZ8YtxRE9hNJYC8J6I1MVbMg6owUp18=
 golang.org/x/sys v0.4.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
