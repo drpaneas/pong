@@ -7,6 +7,10 @@ import (
 	"image/color"
 )
 
+type PaddleHolder interface {
+	GetPaddle() *Paddle
+}
+
 // Paddle is a struct that holds information about a paddle in the game
 type Paddle struct {
 	// The position of the paddle on the screen
@@ -17,6 +21,10 @@ type Paddle struct {
 
 	// The speed of the paddle
 	speed float64
+}
+
+func (p *Paddle) GetPaddle() *Paddle {
+	return p
 }
 
 func (p *Paddle) Draw(screen *ebiten.Image) {

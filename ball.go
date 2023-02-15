@@ -55,11 +55,12 @@ func (b *Ball) Draw(screen *ebiten.Image) {
 }
 
 // Update updates the position of the ball based on its current velocity.
-// It also checks if the ball goes out of the screen and reverses its velocity
 func (b *Ball) Update() {
 	b.position.X += int(math.Round(b.velocity.X))
 	b.position.Y += int(math.Round(b.velocity.Y))
+}
 
+func (b *Ball) handleBallWallCollision() {
 	// Check if ball goes out of screen
 	if b.position.Top() < 0 || b.position.Bottom() > screenHeight {
 		if err := b.playSound("wall"); err != nil {

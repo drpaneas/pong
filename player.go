@@ -26,6 +26,10 @@ func newPlayer() *Player {
 	}
 }
 
+func (p *Player) GetPaddle() *Paddle {
+	return p.paddle
+}
+
 func (player *Player) Draw(screen *ebiten.Image) {
 	player.paddle.Draw(screen)
 }
@@ -49,7 +53,6 @@ func (player *Player) Update() {
 }
 
 func (player *Player) bounce(ball *Ball, volleyCount int) {
-
 	// Chop the player in 8 parts and assign a different angle to each part
 	ball.velocity.X *= -1 // Reverse the ball direction on X axis
 	part := player.paddle.position.Height / 8
@@ -59,10 +62,8 @@ func (player *Player) bounce(ball *Ball, volleyCount int) {
 		sl = []float64{-135, -150, -165, -180, -180, 165, 150, 135}
 	} else if volleyCount >= 4 && volleyCount < 8 {
 		sl = []float64{-150, -165, -180, -180, 165, 150, 135, 120}
-	} else if volleyCount >= 8 {
-		sl = []float64{-165, -180, -180, 165, 150, 135, 120, 105}
 	} else {
-		sl = []float64{-180, -180, 165, 150, 135, 120, 105, 90}
+		sl = []float64{-165, -180, -180, 165, 150, 135, 120, 105}
 	}
 
 	for i := 0; i < 8; i++ {

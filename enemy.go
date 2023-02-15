@@ -23,10 +23,14 @@ func newEnemy() *Enemy {
 		paddle: &Paddle{
 			position: rect.Rect(70, halfGameScreenHeight-110/2, 20, 110),
 			velocity: &Vector2D{X: 0, Y: 0},
-			speed:    14.0,
+			speed:    12.0,
 		},
 		score: 0,
 	}
+}
+
+func (e *Enemy) GetPaddle() *Paddle {
+	return e.paddle
 }
 
 func (enemy *Enemy) Draw(screen *ebiten.Image) {
@@ -52,10 +56,8 @@ func (enemy *Enemy) bounce(ball *Ball, volleyCount int) {
 		sl = []float64{-45, -30, -15, 0, 0, 15, 30, 45}
 	} else if volleyCount >= 4 && volleyCount < 8 {
 		sl = []float64{-60, -45, -30, -15, 0, 0, 15, 30}
-	} else if volleyCount >= 8 {
-		sl = []float64{-75, -60, -45, -30, -15, 0, 15, 30}
 	} else {
-		sl = []float64{-90, -45, -30, -15, 0, 15, 30, 45}
+		sl = []float64{-75, -60, -45, -30, -15, 0, 15, 30}
 	}
 
 	for i := 0; i < 8; i++ {

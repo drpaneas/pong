@@ -8,6 +8,7 @@ const (
 	screenHeight         = 720
 	halfGameScreenWidth  = screenWidth / 2
 	halfGameScreenHeight = screenHeight / 2
+	pointsToWin          = 10
 )
 
 // Game variables (global)

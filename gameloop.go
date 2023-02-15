@@ -6,146 +6,108 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"image/color"
-	"math"
 )
 
 func (g *Game) Update() error {
-	fmt.Println("Ball Velocity: ", g.ball.velocity)
-	if g.state == paused {
+	switch g.state {
+	case paused:
 		return nil
-	}
-	if g.state == gameOver {
+
+	case gameOver:
 		return nil
-	}
 
-	if g.state == firstService && g.ball.velocity.X == 0 && g.ball.velocity.Y == 0 { // if ball is not moving anymore
-		{
-			g.volleyCount = 0 // reset the volley count
-
-			// Serve the ball to a random side, with lower speed,
-			g.ball.setInitialVelocity()
-
-			// if the velocity is going to the left side (enemy), then set the playerTurn to enemy
-			if g.ball.velocity.X < 0.0 {
-				g.playerTurn = playerTurnEnemy
-			} else {
-				g.playerTurn = playerTurnPlayer
-			}
-
+	case firstService:
+		if err := g.handleFirstService(); err != nil {
+			return err
 		}
-	}
 
-	if g.state == playing || g.state == firstService {
+	case playing:
 
-		// Move ball based on its velocity
-		g.ball.Update()
-
-		// if the velocity is going to the left side (enemy), then set the playerTurn to enemy
 		if g.ball.velocity.X < 0.0 {
 			g.playerTurn = playerTurnEnemy
 		} else {
 			g.playerTurn = playerTurnPlayer
 		}
 
-		// Check of events:
-		// 1: Player scores
-		if g.ball.position.Left() <= 0 {
-			if err := g.ball.playSound("score"); err != nil {
-				return err
-			}
-			g.player.score++
-			if g.player.score == 10 {
-				g.state = gameOver
-			} else {
-				g.startNewRound()
-				return nil
-			}
+		// If someone scores,
+		//  1. update the score for this guy and reset the ball
+		//  2. check if the game is over and if so, change the game state
+		if err := g.handleScore(); err != nil {
+			return err
 		}
 
-		// 2. Enemy scores
-		if g.ball.position.Right() >= screenWidth {
-			if err := g.ball.playSound("score"); err != nil {
-				return err
-			}
-			g.enemy.score++
-			if g.enemy.score == 10 {
-				g.state = gameOver
-			} else {
-				g.startNewRound()
-				return nil
-			}
-		}
-
-		// 3. Ball hits player paddle
+		// Collision logic has 3 parts:
+		// 	1. Check if the ball is colliding with the player's paddle
+		// 	2. Check if the ball is colliding with the enemy's paddle
+		// 	3. Check if the ball is colliding with the top or bottom wall
 		if g.ball.position.Overlaps(g.player.paddle.position) {
-			if err := g.ball.playSound("paddle"); err != nil {
+			if err := g.handlePaddleCollision(g.player.paddle); err != nil {
 				return err
 			}
-			g.playerTurn = playerTurnEnemy // enemy has to play next
-			g.volleyCount++
-			g.ball.position.Right(g.player.paddle.position.Left()) // move ball so it touches paddle
-			g.ball.accelerate(1)                                   // faster ball to make the game more interesting
-			g.player.bounce(g.ball, g.volleyCount)
-			g.state = playing
-		}
-
-		// 4. Ball hits enemy paddle
-		if g.ball.position.Overlaps(g.enemy.paddle.position) {
-			if err := g.ball.playSound("paddle"); err != nil {
+		} else if g.ball.position.Overlaps(g.enemy.paddle.position) {
+			if err := g.handlePaddleCollision(g.enemy.paddle); err != nil {
 				return err
 			}
-			g.playerTurn = playerTurnPlayer // player has to play next
-			g.volleyCount++
-			g.ball.position.Left(g.enemy.paddle.position.Right()) // move ball so it touches paddle
-			g.ball.accelerate(1)                                  // faster ball to make the game more interesting
-			g.enemy.bounce(g.ball, g.volleyCount)
-			g.state = playing
-
+		} else {
+			g.ball.handleBallWallCollision()
 		}
 
-		// 5. Normalize ball speed only if the volley count is less than 8
-		//   This is to make the game more interesting, so the ball doesn't go too fast at the beginning
-		if g.volleyCount < 8 {
-			g.ball.normalizeBallSpeed() // normalize ball speed
+		// Make the ball speed up after the first 4 volleys
+		if g.volleyCount < 4 {
+			g.ball.normalizeBallSpeed()
 		}
 
-		// Move the player paddle based on user input
-		g.player.Update()
-
-		// Move the enemy paddle based on the AI
-		// 1: Decide where to move the enemy paddle based on the ball position
+		// AI logic for the enemy has two parts:
+		// 	1. If the enemy is not serving, it will patrol the screen
+		// 	2. If the enemy is serving, it will move towards the ball
 		if g.playerTurn == playerTurnEnemy {
-			// if the ball is at the enemy side of the screen, then move the paddle to the ball
-			if g.ball.position.CenterX() < halfGameScreenWidth {
-				// 1.a. If the ball is higher than the enemy paddle, move the enemy paddle up
-				if g.ball.position.Bottom() < g.enemy.paddle.position.CenterY() {
-					g.enemy.paddle.position.Y -= int(math.Round(g.enemy.paddle.speed))
-				}
-
-				// 1.b. If the ball is lower than the enemy paddle, move the enemy paddle down
-				if g.ball.position.Top() > g.enemy.paddle.position.CenterY() {
-					g.enemy.paddle.position.Y += int(math.Round(g.enemy.paddle.speed))
-				}
-			} else {
-				if g.timer%2 == 0 {
-					g.enemy.patrol()
-				}
-			}
-		}
-
-		if g.playerTurn == playerTurnPlayer {
+			g.handleEnemyAttack()
+		} else {
 			if g.timer%2 == 0 {
 				g.enemy.patrol()
 			}
 		}
 
-		g.timer++
-		if g.timer > 60 {
-			g.timer = 0
-		}
-
-		// 2: Move the enemy paddle to the previously decided location
+		// Lastly, update the ball, player and enemy positions and the timer clock
+		g.ball.Update()
+		g.player.Update()
 		g.enemy.Update()
+		g.updateTimer()
+	}
+
+	return nil
+}
+
+func (g *Game) handleScore() error {
+	if g.ball.position.Left() <= 0 {
+		if err := g.ball.playSound("score"); err != nil {
+			return err
+		}
+		g.player.score++
+		g.checkWinCondition()
+	}
+
+	if g.ball.position.Right() >= screenWidth {
+		if err := g.ball.playSound("score"); err != nil {
+			return err
+		}
+		g.enemy.score++
+		g.checkWinCondition()
+	}
+	return nil
+}
+
+func (g *Game) handleFirstService() error {
+	if g.ball.velocity.X == 0 && g.ball.velocity.Y == 0 {
+		g.volleyCount = 0
+		g.ball.setInitialVelocity()
+
+		if g.ball.velocity.X < 0.0 {
+			g.playerTurn = playerTurnEnemy
+		} else {
+			g.playerTurn = playerTurnPlayer
+		}
+		g.state = playing
 	}
 
 	return nil

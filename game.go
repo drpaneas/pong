@@ -6,6 +6,7 @@ import (
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 	"log"
+	"math"
 )
 
 // GameObject is an interface that holds common fields and methods for all game objects
@@ -90,4 +91,72 @@ func (g *Game) startNewRound() {
 	// Serve the ball to a random side, with lower speed,
 	g.ball.setInitialVelocity()
 
+}
+
+// checkWinCondition checks if either the player or enemy has won the game.
+func (g *Game) checkWinCondition() {
+	if g.player.score == pointsToWin {
+		g.state = gameOver
+	} else if g.enemy.score == pointsToWin {
+		g.state = gameOver
+	} else {
+		g.startNewRound()
+	}
+}
+
+func (g *Game) isGameOver() bool {
+	return g.player.score == pointsToWin || g.enemy.score == pointsToWin
+}
+
+// handleEnemyAttack handles the enemy's paddle movement.
+// If the ball is on the enemy's side of the screen, the enemy will move towards the ball.
+// If the ball is on the player's side of the screen, the enemy will patrol back and forth.
+// The enemy will only patrol every other frame to make it easier to hit the ball.
+// This is done by using the timer variable.
+// The timer is incremented every frame and when it reaches 60, it is reset to 0.
+// This means that the enemy will patrol every other second.
+// This is done to make the game more enjoyable.
+func (g *Game) handleEnemyAttack() {
+	if g.ball.position.CenterX() < halfGameScreenWidth {
+		if g.ball.position.Bottom() < g.enemy.paddle.position.CenterY() {
+			g.enemy.paddle.position.Y -= int(math.Round(g.enemy.paddle.speed))
+		}
+		if g.ball.position.Top() > g.enemy.paddle.position.CenterY() {
+			g.enemy.paddle.position.Y += int(math.Round(g.enemy.paddle.speed))
+		}
+	} else {
+		if g.timer%2 == 0 {
+			g.enemy.patrol()
+		}
+	}
+}
+
+// updateTimer updates the timer by 1 every frame.
+func (g *Game) updateTimer() {
+	g.timer++
+	if g.timer > 60 {
+		g.timer = 0
+	}
+}
+
+func (g *Game) handlePaddleCollision(holder PaddleHolder) error {
+	if err := g.ball.playSound("paddle"); err != nil {
+		return err
+	}
+
+	g.volleyCount++
+	g.ball.accelerate(1)
+
+	switch holder.GetPaddle() {
+	case g.player.paddle:
+		g.playerTurn = playerTurnEnemy
+		g.ball.position.Right(g.player.paddle.position.Left())
+		g.player.bounce(g.ball, g.volleyCount)
+	case g.enemy.paddle:
+		g.playerTurn = playerTurnPlayer
+		g.ball.position.Left(g.enemy.paddle.position.Right())
+		g.enemy.bounce(g.ball, g.volleyCount)
+	}
+
+	return nil
 }
