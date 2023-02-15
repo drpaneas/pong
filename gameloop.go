@@ -78,41 +78,6 @@ func (g *Game) Update() error {
 	return nil
 }
 
-func (g *Game) handleScore() error {
-	if g.ball.position.Left() <= 0 {
-		if err := g.ball.playSound("score"); err != nil {
-			return err
-		}
-		g.player.score++
-		g.checkWinCondition()
-	}
-
-	if g.ball.position.Right() >= screenWidth {
-		if err := g.ball.playSound("score"); err != nil {
-			return err
-		}
-		g.enemy.score++
-		g.checkWinCondition()
-	}
-	return nil
-}
-
-func (g *Game) handleFirstService() error {
-	if g.ball.velocity.X == 0 && g.ball.velocity.Y == 0 {
-		g.volleyCount = 0
-		g.ball.setInitialVelocity()
-
-		if g.ball.velocity.X < 0.0 {
-			g.playerTurn = playerTurnEnemy
-		} else {
-			g.playerTurn = playerTurnPlayer
-		}
-		g.state = playing
-	}
-
-	return nil
-}
-
 func (g *Game) Draw(screen *ebiten.Image) {
 	// draw dashed line in the middle (dimensions 10x60 per dash and 40px space between dashes)
 	for i := 0; i < screenHeight; i += 100 {

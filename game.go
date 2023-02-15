@@ -45,7 +45,7 @@ type Game struct {
 	// A slice to store all the game objects
 	gameObjects []GameObject
 
-	// timer
+	// a timer to delay the patrol movement of the enemy paddle
 	timer int
 }
 
@@ -139,6 +139,7 @@ func (g *Game) updateTimer() {
 	}
 }
 
+// handleBallCollision handles the collision of the ball with the paddles only.
 func (g *Game) handlePaddleCollision(holder PaddleHolder) error {
 	if err := g.ball.playSound("paddle"); err != nil {
 		return err
@@ -158,5 +159,49 @@ func (g *Game) handlePaddleCollision(holder PaddleHolder) error {
 		g.enemy.bounce(g.ball, g.volleyCount)
 	}
 
+	return nil
+}
+
+// handleFirstService handles the first service of the game.
+// The first service is when the ball is in the center of the screen and not moving.
+// When the ball is in this state, the game will serve the ball to a random direction.
+// The ball will also be given a random speed.
+// The game will then change to the playing state.
+func (g *Game) handleFirstService() error {
+	if g.ball.velocity.X == 0 && g.ball.velocity.Y == 0 {
+		g.volleyCount = 0
+		g.ball.setInitialVelocity()
+
+		if g.ball.velocity.X < 0.0 {
+			g.playerTurn = playerTurnEnemy
+		} else {
+			g.playerTurn = playerTurnPlayer
+		}
+		g.state = playing
+	}
+
+	return nil
+}
+
+// handleScore handles the scoring of the game.
+//  1. If the ball goes off the left side of the screen, the player scores.
+//  2. If the ball goes off the right side of the screen, the enemy scores.
+//  3. If either player scores, the game checks if the game is over.
+func (g *Game) handleScore() error {
+	if g.ball.position.Left() <= 0 {
+		if err := g.ball.playSound("score"); err != nil {
+			return err
+		}
+		g.player.score++
+		g.checkWinCondition()
+	}
+
+	if g.ball.position.Right() >= screenWidth {
+		if err := g.ball.playSound("score"); err != nil {
+			return err
+		}
+		g.enemy.score++
+		g.checkWinCondition()
+	}
 	return nil
 }
