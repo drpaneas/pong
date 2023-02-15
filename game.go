@@ -85,8 +85,9 @@ func (g *Game) startNewRound() {
 	g.ball.velocity.Y = 0
 
 	// Place the ball in the center of the screen
-	g.ball.position.Center(halfGameScreenWidth, halfGameScreenHeight)
+	g.ball.position.Center(halfGameScreenWidth, randInt(20, screenHeight-20))
 
 	// Serve the ball to a random side, with lower speed,
 	g.ball.setInitialVelocity()
+
 }

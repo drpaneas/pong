@@ -23,7 +23,7 @@ func newEnemy() *Enemy {
 		paddle: &Paddle{
 			position: rect.Rect(70, halfGameScreenHeight-110/2, 20, 110),
 			velocity: &Vector2D{X: 0, Y: 0},
-			speed:    15.0,
+			speed:    14.0,
 		},
 		score: 0,
 	}

@@ -10,6 +10,7 @@ import (
 )
 
 func (g *Game) Update() error {
+	fmt.Println("Ball Velocity: ", g.ball.velocity)
 	if g.state == paused {
 		return nil
 	}
@@ -77,29 +78,34 @@ func (g *Game) Update() error {
 
 		// 3. Ball hits player paddle
 		if g.ball.position.Overlaps(g.player.paddle.position) {
-			if err := g.ball.playSound("bounce"); err != nil {
+			if err := g.ball.playSound("paddle"); err != nil {
 				return err
 			}
 			g.playerTurn = playerTurnEnemy // enemy has to play next
 			g.volleyCount++
 			g.ball.position.Right(g.player.paddle.position.Left()) // move ball so it touches paddle
-			g.ball.accelerate()                                    // faster ball to make the game more interesting
+			g.ball.accelerate(1)                                   // faster ball to make the game more interesting
 			g.player.bounce(g.ball, g.volleyCount)
 			g.state = playing
-			g.ball.normalizeBallSpeed() // normalize ball speed
 		}
 
 		// 4. Ball hits enemy paddle
 		if g.ball.position.Overlaps(g.enemy.paddle.position) {
-			if err := g.ball.playSound("bounce"); err != nil {
+			if err := g.ball.playSound("paddle"); err != nil {
 				return err
 			}
 			g.playerTurn = playerTurnPlayer // player has to play next
 			g.volleyCount++
 			g.ball.position.Left(g.enemy.paddle.position.Right()) // move ball so it touches paddle
-			g.ball.accelerate()                                   // faster ball to make the game more interesting
+			g.ball.accelerate(1)                                  // faster ball to make the game more interesting
 			g.enemy.bounce(g.ball, g.volleyCount)
 			g.state = playing
+
+		}
+
+		// 5. Normalize ball speed only if the volley count is less than 8
+		//   This is to make the game more interesting, so the ball doesn't go too fast at the beginning
+		if g.volleyCount < 8 {
 			g.ball.normalizeBallSpeed() // normalize ball speed
 		}
 

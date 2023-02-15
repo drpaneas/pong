@@ -79,14 +79,10 @@ func (b *Ball) Update() {
 // setInitialVelocity reduces the ball speed
 // This is used when the ball is served to a player for the first time.
 func (b *Ball) setInitialVelocity() {
-	directionX := randFloat(-0.5, 0.5)
-	directionY := randFloat(-0.5, 0.5)
+	directionX := randomChoice(randFloat(-2, -1), randFloat(1, 2))
+	directionY := randFloat(-2, 2)
 
-	if directionX == 0 {
-		directionX = 1
-	}
-
-	reducer := 0.7
+	reducer := 0.25
 	b.velocity.X = b.speed * reducer * directionX
 	b.velocity.Y = b.speed * reducer * directionY
 
@@ -113,7 +109,7 @@ func (b *Ball) atAngle(angle float64) float64 {
 }
 
 // accelerate increases the ball speed to its maximum value
-func (b *Ball) accelerate() {
+func (b *Ball) accelerate(amount float64) {
 	signX := 1.0
 	if b.velocity.X < 0 {
 		signX = -1
@@ -122,8 +118,8 @@ func (b *Ball) accelerate() {
 	if b.velocity.Y < 0 {
 		signY = -1
 	}
-	b.velocity.X = signX * b.speed
-	b.velocity.Y = signY * b.speed
+	b.velocity.X = signX * b.speed * amount
+	b.velocity.Y = signY * b.speed * amount
 }
 
 func (b *Ball) playSound(name string) error {

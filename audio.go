@@ -10,8 +10,8 @@ import (
 //go:embed wall.ogg
 var wallOgg []byte
 
-//go:embed bounce.ogg
-var bounceOgg []byte
+//go:embed paddle.ogg
+var paddleOgg []byte
 
 //go:embed score.ogg
 var scoreOgg []byte
@@ -51,7 +51,7 @@ func LoadSounds() (map[string]*Sound, error) {
 
 var soundFiles = map[string][]byte{
 	"wall":   wallOgg,
-	"bounce": bounceOgg,
+	"paddle": paddleOgg,
 	"score":  scoreOgg,
 }
 
