@@ -2,9 +2,6 @@ package main
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/opentype"
 	"log"
 	"math"
 )
@@ -19,9 +16,6 @@ type GameObject interface {
 type Game struct {
 	// The player's and enemy's score in the game
 	playerScore, enemyScore int
-
-	// The font used to display the score on the screen
-	font font.Face
 
 	// The current state of the game (playing, paused, etc)
 	state GameState
@@ -47,27 +41,24 @@ type Game struct {
 
 	// a timer to delay the patrol movement of the enemy paddle
 	timer int
+
+	// HUD for the game (used to display score and the result)
+	hud *HUD
 }
 
 func newGame() *Game {
-	// Load the font
-	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
+	newHud, err := newHUD()
 	if err != nil {
 		log.Fatal(err)
 	}
-	face, _ := opentype.NewFace(tt, &opentype.FaceOptions{
-		Size:    32,
-		DPI:     72,
-		Hinting: font.HintingFull,
-	})
 
 	// Create the game
 	game := &Game{
-		font:   face,
 		state:  firstService,
 		ball:   newBall(),
 		player: newPlayer(),
 		enemy:  newEnemy(),
+		hud:    newHud,
 	}
 
 	// Add the objects to the gameObjects slice

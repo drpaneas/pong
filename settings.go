@@ -1,7 +1,5 @@
 package main
 
-import "golang.org/x/image/font"
-
 // Game constants (global)
 const (
 	screenWidth          = 1280
@@ -9,10 +7,4 @@ const (
 	halfGameScreenWidth  = screenWidth / 2
 	halfGameScreenHeight = screenHeight / 2
 	pointsToWin          = 10
-)
-
-// Game variables (global)
-var (
-	// Scoring and font
-	scoreDisplayFont, resultDisplayFont font.Face
 )

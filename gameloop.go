@@ -92,20 +92,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	// draw score
-	text.Draw(screen, fmt.Sprintf("%d", g.enemy.score), scoreDisplayFont, halfGameScreenWidth-360, 120, color.White)
-	text.Draw(screen, fmt.Sprintf("%d", g.player.score), scoreDisplayFont, halfGameScreenWidth+360-75, 120, color.White)
+	text.Draw(screen, fmt.Sprintf("%d", g.enemy.score), g.hud.ScoreDisplayFont, halfGameScreenWidth-360, 120, color.White)
+	text.Draw(screen, fmt.Sprintf("%d", g.player.score), g.hud.ScoreDisplayFont, halfGameScreenWidth+360-75, 120, color.White)
 
 	if g.state == paused {
-		text.Draw(screen, "PAUSED", scoreDisplayFont, halfGameScreenWidth-100, halfGameScreenHeight-100, color.White)
+		text.Draw(screen, "PAUSED", g.hud.ScoreDisplayFont, halfGameScreenWidth-100, halfGameScreenHeight-100, color.White)
 	}
 
 	if g.state == gameOver {
 		if g.player.score > g.enemy.score {
-			text.Draw(screen, "WINNER", resultDisplayFont, halfGameScreenWidth+450, halfGameScreenHeight, color.White)
-			text.Draw(screen, "LOSER", resultDisplayFont, halfGameScreenWidth-450, halfGameScreenHeight, color.White)
+			text.Draw(screen, "WINNER", g.hud.ResultDisplayFont, halfGameScreenWidth+450, halfGameScreenHeight, color.White)
+			text.Draw(screen, "LOSER", g.hud.ResultDisplayFont, halfGameScreenWidth-450, halfGameScreenHeight, color.White)
 		} else {
-			text.Draw(screen, "WINNER", resultDisplayFont, halfGameScreenWidth-450, halfGameScreenHeight, color.White)
-			text.Draw(screen, "LOSER", resultDisplayFont, halfGameScreenWidth+350, halfGameScreenHeight, color.White)
+			text.Draw(screen, "WINNER", g.hud.ResultDisplayFont, halfGameScreenWidth-450, halfGameScreenHeight, color.White)
+			text.Draw(screen, "LOSER", g.hud.ResultDisplayFont, halfGameScreenWidth+350, halfGameScreenHeight, color.White)
 		}
 	}
 }
