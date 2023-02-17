@@ -10,6 +10,8 @@ import (
 	"math"
 )
 
+const maxBallSpeed = 15
+
 // Ball is a struct that holds information about the ball in the game
 type Ball struct {
 	// The position of the ball on the screen
@@ -18,21 +20,16 @@ type Ball struct {
 	// The velocity (movement) of the ball
 	velocity *Vector2D
 
-	// The speed of the ball
-	speed float64
-
 	// sounds map
 	sounds map[string]*Sound
 }
 
 // NewBall creates a new ball with the default values
 // The ball is 20x20 pixels and is placed in the middle of the screen
-// The ball has a speed of 15 pixels per second
 // The ball has a velocity of 0 (not moving) in both directions
 func newBall() *Ball {
 	b := &Ball{
 		position: rect.Rect(halfGameScreenWidth-20/2, halfGameScreenHeight-20/2, 20, 20),
-		speed:    15.0,
 		velocity: &Vector2D{X: 0, Y: 0},
 	}
 
@@ -84,8 +81,8 @@ func (b *Ball) setInitialVelocity() {
 	directionY := randFloat(-2, 2)
 
 	reducer := 0.25
-	b.velocity.X = b.speed * reducer * directionX
-	b.velocity.Y = b.speed * reducer * directionY
+	b.velocity.X = maxBallSpeed * reducer * directionX
+	b.velocity.Y = maxBallSpeed * reducer * directionY
 
 }
 
@@ -94,9 +91,9 @@ func (b *Ball) normalizeBallSpeed() {
 	speed := math.Sqrt(math.Pow(b.velocity.X, 2) + math.Pow(b.velocity.Y, 2))
 
 	// Normalize the ball speed if it's larger than desired
-	if speed > b.speed {
+	if speed > maxBallSpeed {
 		// Adjust the X and Y components of velocity
-		factor := b.speed / speed
+		factor := maxBallSpeed / speed
 		b.velocity.X = b.velocity.X * factor
 		b.velocity.Y = b.velocity.Y * factor
 	}
@@ -119,8 +116,8 @@ func (b *Ball) accelerate(amount float64) {
 	if b.velocity.Y < 0 {
 		signY = -1
 	}
-	b.velocity.X = signX * b.speed * amount
-	b.velocity.Y = signY * b.speed * amount
+	b.velocity.X = signX * maxBallSpeed * amount
+	b.velocity.Y = signY * maxBallSpeed * amount
 }
 
 func (b *Ball) playSound(name string) error {
