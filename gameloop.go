@@ -29,11 +29,9 @@ func (g *Game) Update() error {
 			g.playerTurn = playerTurnPlayer
 		}
 
-		// If someone scores,
-		//  1. update the score for this guy and reset the ball
-		//  2. check if the game is over and if so, change the game state
-		if err := g.handleScore(); err != nil {
-			return err
+		// Make the ball speed up after the first 4 volleys
+		if g.volleyCount < 4 {
+			g.ball.normalizeBallSpeed()
 		}
 
 		// Collision logic has 3 parts:
@@ -52,27 +50,26 @@ func (g *Game) Update() error {
 			g.ball.handleBallWallCollision()
 		}
 
-		// Make the ball speed up after the first 4 volleys
-		if g.volleyCount < 4 {
-			g.ball.normalizeBallSpeed()
+		// If someone scores,
+		//  1. update the score for this guy and reset the ball
+		//  2. check if the game is over and if so, change the game state
+		if err := g.handleScore(); err != nil {
+			return err
 		}
 
 		// AI logic for the enemy has two parts:
 		// 	1. If the enemy is not serving, it will patrol the screen
-		// 	2. If the enemy is serving, it will move towards the ball
+		// 	2. If the enemy is serving, it will attack (meaning, it will move towards the ball)
 		if g.playerTurn == playerTurnEnemy {
 			g.handleEnemyAttack()
 		} else {
-			if g.timer%2 == 0 {
-				g.enemy.patrol()
-			}
+			g.enemy.patrol()
 		}
 
-		// Lastly, update the ball, player and enemy positions and the timer clock
+		// Lastly, update the ball, player and enemy positions
 		g.ball.Update()
 		g.player.Update()
 		g.enemy.Update()
-		g.updateTimer()
 	}
 
 	return nil

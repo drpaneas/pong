@@ -20,7 +20,6 @@ func newPlayer() *Player {
 		paddle: &Paddle{
 			position: rect.Rect(screenWidth-70-20, halfGameScreenHeight-110/2, 20, 110),
 			velocity: &Vector2D{X: 0, Y: 0},
-			speed:    15.0,
 		},
 		score: 0,
 	}

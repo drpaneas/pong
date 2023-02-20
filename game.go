@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"log"
-	"math"
 )
 
 // GameObject is an interface that holds common fields and methods for all game objects
@@ -38,9 +37,6 @@ type Game struct {
 
 	// A slice to store all the game objects
 	gameObjects []GameObject
-
-	// a timer to delay the patrol movement of the enemy paddle
-	timer int
 
 	// HUD for the game (used to display score and the result)
 	hud *HUD
@@ -99,34 +95,48 @@ func (g *Game) isGameOver() bool {
 	return g.player.score == pointsToWin || g.enemy.score == pointsToWin
 }
 
-// handleEnemyAttack handles the enemy's paddle movement.
-// If the ball is on the enemy's side of the screen, the enemy will move towards the ball.
-// If the ball is on the player's side of the screen, the enemy will patrol back and forth.
-// The enemy will only patrol every other frame to make it easier to hit the ball.
-// This is done by using the timer variable.
-// The timer is incremented every frame and when it reaches 60, it is reset to 0.
-// This means that the enemy will patrol every other second.
-// This is done to make the game more enjoyable.
+// handleEnemyAttack handles the enemy's AI paddle movement.
 func (g *Game) handleEnemyAttack() {
-	if g.ball.position.CenterX() < halfGameScreenWidth {
-		if g.ball.position.Bottom() < g.enemy.paddle.position.CenterY() {
-			g.enemy.paddle.position.Y -= int(math.Round(g.enemy.paddle.speed))
-		}
-		if g.ball.position.Top() > g.enemy.paddle.position.CenterY() {
-			g.enemy.paddle.position.Y += int(math.Round(g.enemy.paddle.speed))
-		}
-	} else {
-		if g.timer%2 == 0 {
-			g.enemy.patrol()
-		}
-	}
-}
+	// Calculate in which Y there will be collision
+	// slope of the ball's trajectory
+	slope := g.ball.velocity.Y / g.ball.velocity.X
 
-// updateTimer updates the timer by 1 every frame.
-func (g *Game) updateTimer() {
-	g.timer++
-	if g.timer > 60 {
-		g.timer = 0
+	// Y-intercept of the ball's trajectory
+	yIntercept := float64(g.ball.position.Y) - slope*float64(g.ball.position.X)
+
+	// predict the Y position of the ball when it reaches the center of the paddle
+	predictedY := slope*float64(g.enemy.paddle.position.X) + yIntercept
+
+	// Check if the paddle is already at the predicted Y position
+	// taking into account the paddle's speed (to avoid jittering)
+	offset := 10
+	if g.enemy.paddle.position.CenterX() >= int(predictedY)-offset && g.enemy.paddle.position.CenterX() <= int(predictedY)+offset {
+		// stop moving
+		g.enemy.paddle.velocity.Y = 0
+		return
+	} else {
+		// If the paddle is not at the predicted Y position, move it towards the predicted Y position
+		// If the paddle is lower than the predicted Y position, move it up
+		if g.enemy.paddle.position.CenterY() > int(predictedY) {
+			// if the distance is less than the paddle's speed, stop
+			if g.enemy.paddle.position.CenterY()-int(predictedY) < int(g.enemy.paddle.speed) {
+				g.enemy.paddle.velocity.Y = 0
+				return
+			}
+			// move it up
+			g.enemy.paddle.velocity.Y = randFloat(-g.enemy.paddle.speed/2, -g.enemy.paddle.speed)
+		}
+
+		// If the paddle is higher than the predicted Y position, move it down
+		if g.enemy.paddle.position.CenterY() < int(predictedY) {
+			// if the distance is less than the paddle's speed, stop
+			if int(predictedY)-g.enemy.paddle.position.CenterY() < int(g.enemy.paddle.speed) {
+				g.enemy.paddle.velocity.Y = 0
+				return
+			}
+			// move it down
+			g.enemy.paddle.velocity.Y = randFloat(g.enemy.paddle.speed/2, g.enemy.paddle.speed)
+		}
 	}
 }
 
@@ -162,12 +172,6 @@ func (g *Game) handleFirstService() error {
 	if g.ball.velocity.X == 0 && g.ball.velocity.Y == 0 {
 		g.volleyCount = 0
 		g.ball.setInitialVelocity()
-
-		if g.ball.velocity.X < 0.0 {
-			g.playerTurn = playerTurnEnemy
-		} else {
-			g.playerTurn = playerTurnPlayer
-		}
 		g.state = playing
 	}
 
