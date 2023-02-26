@@ -7,13 +7,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/audio/vorbis"
 )
 
-//go:embed wall.ogg
+//go:embed assets/wall.ogg
 var wallOgg []byte
 
-//go:embed paddle.ogg
+//go:embed assets/paddle.ogg
 var paddleOgg []byte
 
-//go:embed score.ogg
+//go:embed assets/score.ogg
 var scoreOgg []byte
 
 type Sound struct {
