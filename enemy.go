@@ -64,7 +64,7 @@ func (e *Enemy) Update() {
 
 }
 
-// bounce() is making the ball bounce on the enemy paddle
+// bounce is making the ball bounce on the enemy paddle
 func (e *Enemy) bounce(ball *Ball, volleyCount int) {
 	ball.velocity.X *= -1 // reverse the ball direction on X axis
 	part := float64(e.paddle.position.Height / 8.0)
@@ -85,7 +85,7 @@ func (e *Enemy) bounce(ball *Ball, volleyCount int) {
 	}
 }
 
-// patrol() is making the enemy paddle go randomly up and down
+// patrol is making the enemy paddle go randomly up and down
 // taking into account the paddle's speed (to avoid jittering)
 func (e *Enemy) patrol() {
 	if e.randomPosition == 0 {
