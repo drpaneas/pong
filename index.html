@@ -6,10 +6,10 @@
 </head>
 <body>
   <canvas id="canvas" width="1280" height="720"></canvas>
-  <script src="wasm_exec.js"></script>
+  <script src="./wasm/wasm_exec.js"></script>
   <script>
     const go = new Go();
-    WebAssembly.instantiateStreaming(fetch("game.wasm"), go.importObject)
+    WebAssembly.instantiateStreaming(fetch("./wasm/game.wasm"), go.importObject)
       .then((result) => {
         go.run(result.instance);
       });
