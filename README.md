@@ -14,7 +14,7 @@ The game ends when one player reaches 10 points.
 
 ## Play Online
 
-You can play the game online via your web browser at drpaneas.net/pong
+You can play the game online via your web browser at <https://drpaneas.net/pong/>
 
 ## Features
 
