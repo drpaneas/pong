@@ -7,5 +7,4 @@ const (
 	halfGameScreenWidth  = screenWidth / 2
 	halfGameScreenHeight = screenHeight / 2
 	pointsToWin          = 10
-	maxEnemySpeed        = 12
 )
