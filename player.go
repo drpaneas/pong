@@ -25,8 +25,8 @@ func newPlayer() *Player {
 	}
 }
 
-func (p *Player) GetPaddle() *Paddle {
-	return p.paddle
+func (player *Player) GetPaddle() *Paddle {
+	return player.paddle
 }
 
 func (player *Player) Draw(screen *ebiten.Image) {
