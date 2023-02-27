@@ -1,18 +1,13 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Pong</title>
+    <meta charset="UTF-8">
+    <title>Pong Game</title>
 </head>
 <body>
-  <script src="./wasm/wasm_exec.js"></script>
-  <script>
-    const go = new Go();
-    WebAssembly.instantiateStreaming(fetch("./wasm/game.wasm"), go.importObject)
-      .then((result) => {
-        go.run(result.instance);
-      });
-  </script>
+    <h1>Pong</h1>
+    <p>This game is created using <a href="https://ebitengine.org/">EbitenEngine</a>.</p>
+    <p>You can find the source code for this game on <a href="https://github.com/drpaneas/pong">GitHub</a>.</p>
+    <iframe src="./wasm/main.html" width="1280" height="720"></iframe>
 </body>
 </html>
-

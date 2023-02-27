@@ -1,7 +1,7 @@
 # Pong
 
 Pong is a classic arcade game developed by Atari and originally released back in 1972.
-This is a remake of the game, using Go programming language and [Ebitenengine](https://github.com/hajimehoshi/ebiten).
+This is a remake of the game, using Go programming language and [Ebitenengine](https://ebitengine.org/).
 The gameplay mechanics here are slightly different from the original.
 
 ![screenshot](screenshot.png)
@@ -34,19 +34,33 @@ Once you have Go installed, follow these steps:
 ## How to Build for the Browser
 
 1. Copy `wasm_exec.js` into the game's wasm dir: `cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" ./wasm/`
-2. Build the Web Assembly version of the game: `GOOS=js GOARCH=wasm go build -o ./wasm/game.wasm`
-3. Have an HTML file that the `BODY` looks like this:
+2. Build the Web Assembly version of the game into the wasm dir: `env GOOS=js GOARCH=wasm go build -o ./wasm/game.wasm`
+3. Create an HTML file (e.g. `./wasm/main.html`) that loads the Web Assembly version of the game and the `wasm_exec.js` file
 
 ```html
-<canvas id="canvas" width="1280" height="720"></canvas>
-<script src="./wasm/wasm_exec.js"></script>
+<!DOCTYPE html>
+<script src="wasm_exec.js"></script>
 <script>
-  const go = new Go();
-  WebAssembly.instantiateStreaming(fetch("./wasm/game.wasm"), go.importObject)
-    .then((result) => {
-      go.run(result.instance);
+    // Polyfill
+    if (!WebAssembly.instantiateStreaming) {
+        WebAssembly.instantiateStreaming = async (resp, importObject) => {
+            const source = await (await resp).arrayBuffer();
+            return await WebAssembly.instantiate(source, importObject);
+        };
+    }
+
+    const go = new Go();
+    WebAssembly.instantiateStreaming(fetch("game.wasm"), go.importObject).then(result => {
+        go.run(result.instance);
     });
 </script>
 ```
 
-4. Start a server (e.g. `python -m http.server`) and visit `http://localhost:8000` in your web browser to play your game.
+4. Create an `index.html` file placed at the root of the repository that loads the HTML file you created in the previous step
+
+```html
+<!DOCTYPE html>
+<iframe src="./wasm/main.html" width="1280" height="720"></iframe>
+```
+
+5. Start a server (e.g. `python -m http.server`) and visit `http://localhost:8000` in your web browser to play your game.
