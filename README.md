@@ -1,8 +1,10 @@
 # Pong
 
 Pong is a classic arcade game developed by Atari and originally released back in 1972.
-This is a remake of the game, using Go programming language and Ebiten game library.
+This is a remake of the game, using Go programming language and [Ebitenengine](https://github.com/hajimehoshi/ebiten).
 The gameplay mechanics here are slightly different from the original.
+
+![screenshot](screenshot.png)
 
 ## How to Play
 
@@ -12,7 +14,7 @@ The game ends when one player reaches 10 points.
 
 ## Play Online
 
-You can play the game online via your web browser at <https://drpaneas.net/pong/>
+You can play the game online via your web browser at drpaneas.net/pong
 
 ## Features
 
@@ -27,26 +29,24 @@ Once you have Go installed, follow these steps:
 
 1. Clone the repository: `git clone https://github.com/your-username/pong.git`
 2. Change into the repository directory: `cd pong`
-3. Run the game: `go run main.go`
+3. Run the game: `go build && ./pong`
 
 ## How to Build for the Browser
 
-1. Add the following build tag to the `main.go`: `// +build js,wasm`
-2. Copy `wasm_exec.js` into the game's dir: `cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" .`
+1. Copy `wasm_exec.js` into the game's wasm dir: `cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" ./wasm/`
+2. Build the Web Assembly version of the game: `GOOS=js GOARCH=wasm go build -o ./wasm/game.wasm`
 3. Have an HTML file that the `BODY` looks like this:
 
 ```html
-<canvas id="canvas" width="640" height="480"></canvas>
-<script src="wasm_exec.js"></script>
+<canvas id="canvas" width="1280" height="720"></canvas>
+<script src="./wasm/wasm_exec.js"></script>
 <script>
   const go = new Go();
-  WebAssembly.instantiateStreaming(fetch("game.wasm"), go.importObject)
+  WebAssembly.instantiateStreaming(fetch("./wasm/game.wasm"), go.importObject)
     .then((result) => {
       go.run(result.instance);
     });
 </script>
 ```
 
-4. Use the `GOOS` and `GOARCH` environment variables to compile your game for WebAssembly: `env GOOS=js GOARCH=wasm go build -o game.wasm`
-5. The previous step should have created `game.wasm`.
-6. Start a server (e.g. `python -m http.server`) and visit `http://localhost:8000` in your web browser to play your game.
+4. Start a server (e.g. `python -m http.server`) and visit `http://localhost:8000` in your web browser to play your game.
