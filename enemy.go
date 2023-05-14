@@ -6,13 +6,10 @@ import (
 	"math"
 )
 
-// Enemy is a struct that holds information about the enemy's paddle and score
+// Enemy is a struct that holds information about the enemy in the game
 type Enemy struct {
 	// The enemy's paddle
 	paddle *Paddle
-
-	// The enemy's score
-	score int
 
 	// Random goto position during patrol
 	randomPosition int
@@ -26,7 +23,6 @@ func newEnemy() *Enemy {
 			velocity: &Vector2D{X: 0, Y: 0},
 			speed:    13,
 		},
-		score: 0,
 	}
 }
 

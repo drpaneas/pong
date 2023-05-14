@@ -13,6 +13,6 @@ const (
 type playerTurn int
 
 const (
-	playerTurnPlayer playerTurn = iota
-	playerTurnEnemy
+	user playerTurn = iota
+	computer
 )

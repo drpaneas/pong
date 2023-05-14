@@ -24,9 +24,9 @@ func (g *Game) Update() error {
 	case playing:
 
 		if g.ball.velocity.X < 0.0 {
-			g.playerTurn = playerTurnEnemy
+			g.turn = computer
 		} else {
-			g.playerTurn = playerTurnPlayer
+			g.turn = user
 		}
 
 		// Make the ball speed up after the first 4 volleys
@@ -60,7 +60,7 @@ func (g *Game) Update() error {
 		// AI logic for the enemy has two parts:
 		// 	1. If the enemy is not serving, it will patrol the screen
 		// 	2. If the enemy is serving, it will attack (meaning, it will move towards the ball)
-		if g.playerTurn == playerTurnEnemy {
+		if g.turn == computer {
 			g.handleEnemyAttack()
 		} else {
 			g.enemy.patrol()
@@ -89,15 +89,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	// draw score
-	text.Draw(screen, fmt.Sprintf("%d", g.enemy.score), g.hud.ScoreDisplayFont, halfGameScreenWidth-360, 120, color.White)
-	text.Draw(screen, fmt.Sprintf("%d", g.player.score), g.hud.ScoreDisplayFont, halfGameScreenWidth+360-75, 120, color.White)
+	text.Draw(screen, fmt.Sprintf("%d", g.score.enemy), g.hud.ScoreDisplayFont, halfGameScreenWidth-360, 120, color.White)
+	text.Draw(screen, fmt.Sprintf("%d", g.score.player), g.hud.ScoreDisplayFont, halfGameScreenWidth+360-75, 120, color.White)
 
 	if g.state == paused {
 		text.Draw(screen, "PAUSED", g.hud.ScoreDisplayFont, halfGameScreenWidth-100, halfGameScreenHeight-100, color.White)
 	}
 
 	if g.state == gameOver {
-		if g.player.score > g.enemy.score {
+		if g.score.player > g.score.enemy {
 			text.Draw(screen, "WINNER", g.hud.ResultDisplayFont, halfGameScreenWidth+450, halfGameScreenHeight, color.White)
 			text.Draw(screen, "LOSER", g.hud.ResultDisplayFont, halfGameScreenWidth-450, halfGameScreenHeight, color.White)
 		} else {

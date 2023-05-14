@@ -10,9 +10,6 @@ import (
 type Player struct {
 	// The player's paddle
 	paddle *Paddle
-
-	// The player's score
-	score int
 }
 
 func newPlayer() *Player {
@@ -21,7 +18,6 @@ func newPlayer() *Player {
 			position: rect.Rect(screenWidth-70-20, halfGameScreenHeight-110/2, 20, 110),
 			velocity: &Vector2D{X: 0, Y: 0},
 		},
-		score: 0,
 	}
 }
 

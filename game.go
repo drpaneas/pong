@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-// GameObject is an interface that holds common fields and methods for all game objects
+// GameObject is considered anything that can be updated and drawn on the screen
 type GameObject interface {
 	Update()
 	Draw(screen *ebiten.Image)
@@ -13,14 +13,14 @@ type GameObject interface {
 
 // Game is the main struct for our game that holds all the important information
 type Game struct {
-	// The player's and enemy's score in the game
-	playerScore, enemyScore int
+	// The score in the game
+	score Score
 
 	// The current state of the game (playing, paused, etc)
 	state GameState
 
-	// The current turn of the player (player or enemy)
-	playerTurn playerTurn
+	// The current turn of the player (user or computer)
+	turn playerTurn
 
 	// The number of times the ball has been hit back and forth
 	// the more times it is hit, the faster it goes to increase the difficulty
@@ -35,7 +35,7 @@ type Game struct {
 	// The enemy's paddle
 	enemy *Enemy
 
-	// A slice to store all the game objects
+	// A slice to store all the game objects (ball, player, enemy) for easier drawing
 	gameObjects []GameObject
 
 	// HUD for the game (used to display score and the result)
@@ -82,9 +82,9 @@ func (g *Game) startNewRound() {
 
 // checkWinCondition checks if either the player or enemy has won the game.
 func (g *Game) checkWinCondition() {
-	if g.player.score == pointsToWin {
+	if g.score.player == pointsToWin {
 		g.state = gameOver
-	} else if g.enemy.score == pointsToWin {
+	} else if g.score.enemy == pointsToWin {
 		g.state = gameOver
 	} else {
 		g.startNewRound()
@@ -92,7 +92,7 @@ func (g *Game) checkWinCondition() {
 }
 
 func (g *Game) isGameOver() bool {
-	return g.player.score == pointsToWin || g.enemy.score == pointsToWin
+	return g.score.player == pointsToWin || g.score.enemy == pointsToWin
 }
 
 // handleEnemyAttack handles the enemy's AI paddle movement.
@@ -151,11 +151,11 @@ func (g *Game) handlePaddleCollision(holder PaddleHolder) error {
 
 	switch holder.GetPaddle() {
 	case g.player.paddle:
-		g.playerTurn = playerTurnEnemy
+		g.turn = computer
 		g.ball.position.Right(g.player.paddle.position.Left())
 		g.player.bounce(g.ball, g.volleyCount)
 	case g.enemy.paddle:
-		g.playerTurn = playerTurnPlayer
+		g.turn = user
 		g.ball.position.Left(g.enemy.paddle.position.Right())
 		g.enemy.bounce(g.ball, g.volleyCount)
 	}
@@ -187,7 +187,7 @@ func (g *Game) handleScore() error {
 		if err := g.ball.playSound("score"); err != nil {
 			return err
 		}
-		g.player.score++
+		g.score.player++
 		g.checkWinCondition()
 	}
 
@@ -195,7 +195,7 @@ func (g *Game) handleScore() error {
 		if err := g.ball.playSound("score"); err != nil {
 			return err
 		}
-		g.enemy.score++
+		g.score.enemy++
 		g.checkWinCondition()
 	}
 	return nil
