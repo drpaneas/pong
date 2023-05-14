@@ -35,8 +35,9 @@ type Game struct {
 	// The enemy's paddle
 	enemy *Enemy
 
-	// A slice to store all the game objects (ball, player, enemy) for easier drawing
-	gameObjects []GameObject
+	// A slice to store all the game objects (ball, player, enemy)
+	// used to update and draw them all at once
+	objects []GameObject
 
 	// HUD for the game (used to display score and the result)
 	hud *HUD
@@ -57,8 +58,8 @@ func newGame() *Game {
 		hud:    newHud,
 	}
 
-	// Add the objects to the gameObjects slice
-	game.gameObjects = append(game.gameObjects, game.ball, game.player, game.enemy)
+	// Add the objects to the objects slice
+	game.objects = append(game.objects, game.ball, game.player, game.enemy)
 
 	return game
 }

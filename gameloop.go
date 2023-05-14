@@ -22,7 +22,6 @@ func (g *Game) Update() error {
 		}
 
 	case playing:
-
 		if g.ball.velocity.X < 0.0 {
 			g.turn = computer
 		} else {
@@ -67,9 +66,9 @@ func (g *Game) Update() error {
 		}
 
 		// Lastly, update the ball, player and enemy positions
-		g.ball.Update()
-		g.player.Update()
-		g.enemy.Update()
+		for _, obj := range g.objects {
+			obj.Update()
+		}
 	}
 
 	return nil
@@ -83,8 +82,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		vector.StrokeLine(screen, float32(halfGameScreenWidth), float32(i), float32(halfGameScreenWidth), float32(i+60), 10, color.White)
 	}
 
-	// Loop through the gameObjects slice and call the Draw function for each object
-	for _, obj := range g.gameObjects {
+	// Loop through the objects slice and call the Draw function for each object
+	for _, obj := range g.objects {
 		obj.Draw(screen)
 	}
 
