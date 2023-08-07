@@ -1,5 +1,5 @@
-github.com/drpaneas/rect v0.0.0-20230123232422-89a6cee71c7d h1:QbdtgzehJp8jU4ZXZkFfYYNbXkNlbWwneF6Mg6VjPmY=
-github.com/drpaneas/rect v0.0.0-20230123232422-89a6cee71c7d/go.mod h1:6mxCMCHAF54Jf5RSqFCyhQ7VleoS4ZdJ5Taagvsx2uE=
+github.com/drpaneas/rect v1.0.0 h1:NdojFt5M6EnBZDwa1iHicON1bDK/7ivWVZa+630AcJY=
+github.com/drpaneas/rect v1.0.0/go.mod h1:UCF9MdWqvj4Uq8uM6IkUGwu/+c/hQeawd1e99JYLcrQ=
 github.com/ebitengine/purego v0.2.0-alpha.0.20230107011038-a7c4d8fb43b1 h1:gXg40rlIcbyIqEHp0gjz9yHRahQ5xq+l00KrlY6w4vo=
 github.com/ebitengine/purego v0.2.0-alpha.0.20230107011038-a7c4d8fb43b1/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI0mRfJZTmQ=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20221017161538-93cebf72946b h1:GgabKamyOYguHqHjSkDACcgoPIz3w0Dis/zJ1wyHHHU=

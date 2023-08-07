@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"image/color"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"image/color"
 )
 
 func (g *Game) Update() error {
@@ -37,11 +38,11 @@ func (g *Game) Update() error {
 		// 	1. Check if the ball is colliding with the player's paddle
 		// 	2. Check if the ball is colliding with the enemy's paddle
 		// 	3. Check if the ball is colliding with the top or bottom wall
-		if g.ball.position.Overlaps(g.player.paddle.position) {
+		if g.ball.position.CollidesWith(g.player.paddle.position) {
 			if err := g.handlePaddleCollision(g.player.paddle); err != nil {
 				return err
 			}
-		} else if g.ball.position.Overlaps(g.enemy.paddle.position) {
+		} else if g.ball.position.CollidesWith(g.enemy.paddle.position) {
 			if err := g.handlePaddleCollision(g.enemy.paddle); err != nil {
 				return err
 			}

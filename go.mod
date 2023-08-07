@@ -3,7 +3,7 @@ module github.com/drpaneas/pong
 go 1.20
 
 require (
-	github.com/drpaneas/rect v0.0.0-20230123232422-89a6cee71c7d
+	github.com/drpaneas/rect v1.0.0
 	github.com/hajimehoshi/ebiten/v2 v2.5.0-alpha.12.0.20230202133301-f4371991fe43
 	golang.org/x/image v0.5.0
 )
